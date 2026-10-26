@@ -1,0 +1,73 @@
+@page "/kitchen"
+@attribute [Authorize(Roles = "Admin,Kitchen")]
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+@inject OrderService Service
+@inject BusinessNotifications Notifications
+@inject AuthenticationStateProvider Authentication
+@inject IJSRuntime JS
+<PageTitle>Kitchen · 335 Order</PageTitle>
+<h1>Kitchen display</h1>
+<button @onclick="EnableSound">Enable sound</button><span> @soundStatus</span>
+<p><a href="/dashboard">Dashboard</a> · Database reconciliation every 5 seconds · Last sync: @lastSync</p>
+@if (error != null) { <p class="error" role="alert">@error</p> }
+@if (tickets == null) { <p>Loading kitchen tickets…</p> }
+else if (tickets.Count == 0) { <p>No outstanding orders.</p> }
+else
+{
+    <div class="menu-grid">
+    @foreach (var t in tickets)
+    {
+        <section class="card @(t.Status == KitchenStatus.Cancelled ? "cancelled" : "")">
+            <h2>@(t.Order.Table == null ? "TAKEAWAY" : $"TABLE {t.Order.Table.Number}") · @t.Status.ToString().ToUpperInvariant()</h2>
+            <p>@t.Order.OrderNumber</p>
+            <p>@Math.Max(0, (int)(DateTime.UtcNow - t.CreatedAtUtc).TotalMinutes) minutes elapsed</p>
+            @foreach (var i in t.Items)
+            {
+                <p><strong>@(i.Quantity - i.OrderItem.CancelledQuantity) × @i.OrderItem.ItemNameSnapshot</strong> · @i.NotesSnapshot</p>
+                @if (i.OrderItem.CancelledQuantity > 0) { <p class="error">CANCELLED: @i.OrderItem.CancelledQuantity of @i.Quantity originally sent. Check before cooking.</p> }
+            }
+            @if (t.Order.Notes.Length > 0) { <p>Order notes: @t.Order.Notes</p> }
+            @if (t.Status == KitchenStatus.New) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Preparing)">Acknowledge / start preparing</button> }
+            @if (t.Status == KitchenStatus.Preparing) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Ready)">Mark ready</button> }
+        </section>
+    }
+    </div>
+}
+@code {
+    private List<KitchenTicket>? tickets; private string? error; private string lastSync = "waiting"; private bool busy;
+    private readonly CancellationTokenSource stop = new(); private Task? reconcile;
+    private string soundStatus = "Sound is off. Keep this page visible.";
+    private async Task EnableSound() { try { soundStatus = await JS.InvokeAsync<bool>("kitchenSound.enable") ? "Sound enabled" : "Browser blocked audio"; } catch { soundStatus = "Audio unavailable in this browser"; } }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (tickets != null) try { await JS.InvokeVoidAsync("kitchenSound.reconcile", (object)tickets.Select(x => x.Id.ToString()).ToArray()); } catch (JSDisconnectedException) { }
+    }
+    protected override async Task OnInitializedAsync() { Notifications.Changed += Changed; await Reload(); reconcile = Poll(); }
+    private void Changed(BusinessEvent e) => _ = InvokeAsync(async () => { await Reload(); StateHasChanged(); });
+    private async Task Reload()
+    {
+        try { tickets = await Service.Tickets(); error = null; lastSync = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Kuala_Lumpur")).ToString("HH:mm:ss"); }
+        catch { error = "Kitchen data unavailable. Retrying automatically…"; }
+    }
+    private async Task Poll()
+    {
+        try { using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5)); while (await timer.WaitForNextTickAsync(stop.Token)) await InvokeAsync(async () => { await Reload(); StateHasChanged(); }); }
+        catch (OperationCanceledException) { }
+    }
+    private async Task Update(KitchenTicket ticket, KitchenStatus status)
+    {
+        busy = true;
+        try
+        {
+            var u = (await Authentication.GetAuthenticationStateAsync()).User;
+            if (!(u.IsInRole("Admin") || u.IsInRole("Kitchen"))) throw new BusinessException("Not authorized", 403);
+            await Service.SetTicket(ticket.Id, new(ticket.Order.Version, status), u.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            await Reload();
+        }
+        catch (BusinessException e) { error = e.Message; }
+        catch { error = "Update could not be confirmed. Refresh state before retrying."; }
+        finally { busy = false; }
+    }
+    public async ValueTask DisposeAsync() { Notifications.Changed -= Changed; stop.Cancel(); if (reconcile != null) await reconcile; stop.Dispose(); }
+}

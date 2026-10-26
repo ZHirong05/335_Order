@@ -1,0 +1,78 @@
+@page "/order"
+@page "/order/{Id:guid}"
+@attribute [Authorize(Roles = "Admin,Waiter")]
+@rendermode InteractiveServer
+@inject OrderService Service
+@inject AuthenticationStateProvider Authentication
+@inject NavigationManager Nav
+<PageTitle>Waiter · 335 Order</PageTitle>
+<h1>@(Id.HasValue ? "Add items to order" : "New order")</h1>
+<p><a href="/dashboard">Dashboard</a></p>
+@if (error != null) { <p class="error" role="alert">@error</p> }
+@if (menu == null) { <p>Loading menu…</p> }
+else
+{
+    @if (!Id.HasValue)
+    {
+        <label>Order type <select @bind="type"><option value="DineIn">Dine-in</option><option value="Takeaway">Takeaway</option></select></label>
+        @if (type == OrderType.DineIn)
+        {
+            <label>Available table <select @bind="tableId"><option value="0">Choose a table</option>@foreach (var t in tables) { <option value="@t.Id">Table @t.Number</option> }</select></label>
+        }
+    }
+    <label>Search menu <input @bind="search" @bind:event="oninput" /></label>
+    <label>Category <select @bind="category"><option value="">All categories</option>@foreach (var c in menu.Select(x => x.Category.Name).Distinct()) { <option>@c</option> }</select></label>
+    <div class="menu-grid">
+    @foreach (var m in menu.Where(m => m.Name.Contains(search, StringComparison.OrdinalIgnoreCase) && (category == "" || m.Category.Name == category)))
+    {
+        <button @onclick="() => Add(m)">@m.Name <strong>RM @m.Price.ToString("0.00")</strong></button>
+    }
+    </div>
+    <h2>New items</h2>
+    @if (cart.Count == 0) { <p>Tap a menu item to start.</p> }
+    @foreach (var line in cart)
+    {
+        <div class="card">
+            <strong>@line.Menu.Name</strong>
+            <label>Quantity <input type="number" min="1" max="99" @bind="line.Quantity" /></label>
+            <label>Kitchen notes <input maxlength="500" @bind="line.Notes" /></label>
+            <button @onclick="() => cart.Remove(line)">Remove</button>
+        </div>
+    }
+    <p><strong>Total: RM @cart.Sum(x => x.Quantity * x.Menu.Price).ToString("0.00")</strong></p>
+    <label>Order notes <input maxlength="500" @bind="notes" /></label>
+    <button disabled="@(busy || cart.Count == 0)" @onclick="Submit">@(busy ? "Submitting…" : "Send to kitchen")</button>
+    <h2>Active orders</h2>
+    @foreach (var o in active) { <p><a href="@($"/order/{o.Id}")">@o.OrderNumber · @(o.TableId.HasValue ? $"Table {o.Table!.Number}" : "Takeaway")</a></p> }
+}
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    private List<MenuItem>? menu; private List<DiningTable> tables = []; private List<Order> active = [];
+    private readonly List<CartLine> cart = []; private string search = "", category = "", notes = "";
+    private OrderType type; private int tableId; private bool busy; private string? error;
+    private string key = Guid.NewGuid().ToString(); private long version;
+    protected override async Task OnParametersSetAsync()
+    {
+        try { menu = await Service.Menu(); active = await Service.Active(); tables = (await Service.Tables()).Where(t => !active.Any(o => o.TableId == t.Id)).ToList(); if (Id.HasValue) version = (await Service.Bill(Id.Value)).Version; }
+        catch (Exception) { error = "Could not load ordering data. Reload to retry."; }
+    }
+    private void Add(MenuItem item) { var line = cart.FirstOrDefault(x => x.Menu.Id == item.Id); if (line == null) cart.Add(new() { Menu = item }); else if (line.Quantity < 99) line.Quantity++; }
+    private async Task Submit()
+    {
+        busy = true; error = null;
+        try
+        {
+            var user = (await Authentication.GetAuthenticationStateAsync()).User;
+            if (!(user.IsInRole("Admin") || user.IsInRole("Waiter"))) throw new BusinessException("Not authorized", 403);
+            var items = cart.Select(x => new ItemInput(x.Menu.Id, x.Quantity, x.Notes)).ToList();
+            Guid id;
+            if (Id.HasValue) id = await Service.Add(Id.Value, new(version, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            else id = await Service.Create(new(type, type == OrderType.DineIn ? tableId : null, notes, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            cart.Clear(); key = Guid.NewGuid().ToString(); Nav.NavigateTo($"/cashier/{id}");
+        }
+        catch (BusinessException e) { error = e.Message; }
+        catch { error = "Could not confirm submission. Retry the same request; it will not create duplicate items."; }
+        finally { busy = false; }
+    }
+    private sealed class CartLine { public MenuItem Menu { get; set; } = null!; public int Quantity { get; set; } = 1; public string Notes { get; set; } = ""; }
+}

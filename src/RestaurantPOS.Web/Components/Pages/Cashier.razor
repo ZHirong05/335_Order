@@ -1,0 +1,61 @@
+@page "/cashier"
+@page "/cashier/{Id:guid}"
+@attribute [Authorize(Roles = "Admin,Cashier,Waiter")]
+@rendermode InteractiveServer
+@inject OrderService Service
+@inject AuthenticationStateProvider Authentication
+@inject IJSRuntime JS
+<PageTitle>Bill · 335 Order</PageTitle>
+<h1>Order bills</h1>
+<p class="no-print"><a href="/dashboard">Dashboard</a> · <button @onclick="Load">Refresh</button></p>
+@if (message != null) { <p role="status">@message</p> }
+@if (orders == null) { <p>Loading orders…</p> }
+else if (!Id.HasValue)
+{
+    @if (orders.Count == 0) { <p>No active orders.</p> }
+    @foreach (var o in orders) { <p><a href="@($"/cashier/{o.Id}")">@o.OrderNumber · @(o.Table == null ? "Takeaway" : $"Table {o.Table.Number}")</a></p> }
+}
+else if (bill != null)
+{
+    <article class="receipt">
+        <h2>335 Order · Provisional bill</h2>
+        <p>@bill.OrderNumber · @bill.Destination</p>
+        <p>@TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Kuala_Lumpur")).ToString("yyyy-MM-dd HH:mm") MYT</p>
+        <table><thead><tr><th>Item</th><th>Qty</th><th>Unit RM</th><th>Total RM</th></tr></thead><tbody>
+        @foreach (var i in bill.Items) { <tr><td>@i.Name<br />@i.Notes</td><td>@i.Quantity</td><td>@i.UnitPrice.ToString("0.00")</td><td>@( (i.Quantity * i.UnitPrice).ToString("0.00") )</td></tr> }
+        </tbody></table>
+        <p><strong>Total RM @bill.Total.ToString("0.00")</strong></p>
+        <p>Paid RM @bill.Paid.ToString("0.00") · Balance RM @bill.Balance.ToString("0.00")</p>
+        <p>Payment recording is not available in this first delivery.</p>
+    </article>
+    <button class="no-print" @onclick="Print">Print bill</button>
+    <AuthorizeView Roles="Admin,Waiter">
+        <p><a href="@($"/order/{Id}")">Add more items</a></p>
+        <h2>Cancel items</h2>
+        <label>Item <select @bind="cancelId"><option value="@Guid.Empty">Choose item</option>@foreach (var i in bill.Items.Where(x => x.Quantity > 0)) { <option value="@i.Id">@i.Name (@i.Quantity)</option> }</select></label>
+        <label>Quantity <input type="number" min="1" @bind="cancelQuantity" /></label>
+        <label>Reason <input maxlength="500" @bind="reason" /></label>
+        <button disabled="@busy" @onclick="Cancel">Cancel and notify kitchen</button>
+    </AuthorizeView>
+}
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    private List<Order>? orders; private Bill? bill; private string? message; private Guid cancelId; private int cancelQuantity = 1; private string reason = ""; private bool busy;
+    protected override Task OnParametersSetAsync() => Load();
+    private async Task Load() { try { orders = await Service.Active(); if (Id.HasValue) bill = await Service.Bill(Id.Value); } catch { message = "Could not load order. Use Refresh to retry."; } }
+    private async Task Print() => await JS.InvokeVoidAsync("window.print");
+    private async Task Cancel()
+    {
+        busy = true;
+        try
+        {
+            var u = (await Authentication.GetAuthenticationStateAsync()).User;
+            if (!(u.IsInRole("Admin") || u.IsInRole("Waiter"))) throw new BusinessException("Not authorized", 403);
+            await Service.Cancel(Id!.Value, cancelId, new(bill!.Version, cancelQuantity, reason), u.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            await Load(); message = "Cancellation recorded and kitchen notified.";
+        }
+        catch (BusinessException e) { message = e.Message; }
+        catch { message = "Cancellation could not be confirmed. Refresh before retrying."; }
+        finally { busy = false; }
+    }
+}

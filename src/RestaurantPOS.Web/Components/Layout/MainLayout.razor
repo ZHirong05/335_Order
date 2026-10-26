@@ -1,0 +1,41 @@
+﻿@inherits LayoutComponentBase
+
+@inject IHostEnvironment Environment
+@inject IConfiguration Configuration
+<div class="page">
+    <div class="sidebar">
+        <a class="brand" href="/dashboard"><span class="brand-mark">335</span><span>Order<span class="brand-caption">RESTAURANT WORKSPACE</span></span></a>
+        <div class="nav-caption">WORKSPACE</div>
+        <nav class="workspace-nav" aria-label="Main navigation">
+            <NavLink href="/dashboard"><span aria-hidden="true">▦</span> Overview</NavLink>
+            <AuthorizeView Roles="Admin,Waiter"><NavLink href="/order"><span aria-hidden="true">＋</span> Take orders</NavLink></AuthorizeView>
+            <AuthorizeView Roles="Admin,Kitchen"><NavLink href="/kitchen"><span aria-hidden="true">≋</span> Kitchen display</NavLink></AuthorizeView>
+            <AuthorizeView Roles="Admin,Cashier"><NavLink href="/cashier"><span aria-hidden="true">▤</span> Cashier</NavLink></AuthorizeView>
+            @if (!DevelopmentPreview.Enabled(Environment, Configuration))
+            {
+                <AuthorizeView><NotAuthorized><NavLink href="/login">Sign in</NavLink></NotAuthorized></AuthorizeView>
+            }
+        </nav>
+        <div class="sidebar-footer">Made for the everyday rush.<br /><span>335 Restaurant POS</span></div>
+    </div>
+
+    <main>
+        <div class="top-row">
+            <span class="top-label">Restaurant workspace</span><span class="location-label">Kuala Lumpur <span aria-hidden="true">/</span> MYR (RM)</span>
+        </div>
+
+        <article class="content">
+            @if (DevelopmentPreview.Enabled(Environment, Configuration))
+            {
+                <div class="preview-banner" role="status"><span class="preview-dot" aria-hidden="true"></span> Development preview <span class="preview-description">Admin access · Sign-in skipped</span></div>
+            }
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

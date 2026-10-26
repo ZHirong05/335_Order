@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+.vs/
+.local/
+**/data/
+**/backups/
+*.db*
+*.pfx
+*.user
+TestResults/
+artifacts/

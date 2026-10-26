@@ -1,0 +1,22 @@
+﻿@page "/dashboard"
+@attribute [Authorize]
+@inject IHostEnvironment Environment
+@inject IConfiguration Configuration
+<PageTitle>Overview · 335 Order</PageTitle>
+<div class="dashboard-heading">
+    <div><p class="eyebrow">YOUR DAILY WORKSPACE</p><h1>Ready for service.</h1><p class="page-subtitle">Good food. Smooth service. Everything in one place.</p></div>
+    <div class="restaurant-badge"><span>335</span><div>Restaurant POS<small>Local restaurant workspace</small></div></div>
+</div>
+<section class="service-banner">
+    <div><span class="section-kicker">FROM TABLE TO KITCHEN</span><h2>A little less rush.<br />A lot more flow.</h2><p>Take an order, keep the kitchen moving,<br class="desktop-break" /> and bring every table together.</p><AuthorizeView Roles="Admin,Waiter"><a class="action" href="/order">Start a new order <span aria-hidden="true">↗</span></a></AuthorizeView></div>
+    <div class="service-illustration" aria-hidden="true"><div class="plate"><div class="plate-inner"><span>335</span><small>MADE TO SERVE</small></div></div><div class="order-slip"><span>THE NEXT ORDER</span><i></i><i></i><i></i><strong>Freshly prepared.</strong></div></div>
+</section>
+<div class="section-heading"><h2>Choose your workspace</h2><span>One service, working together</span></div>
+<div class="workspace-grid">
+    <AuthorizeView Roles="Admin,Waiter"><a class="workspace-card" href="/order"><span class="workspace-icon waiter-icon" aria-hidden="true">＋</span><span class="card-step">01 / WAITER</span><h3>Take an order</h3><p>Tables, takeaway, and those<br />little special requests.</p><span class="card-link">Open ordering <span aria-hidden="true">↗</span></span></a></AuthorizeView>
+    <AuthorizeView Roles="Admin,Kitchen"><a class="workspace-card" href="/kitchen"><span class="workspace-icon kitchen-icon" aria-hidden="true">≋</span><span class="card-step">02 / KITCHEN</span><h3>Keep things cooking</h3><p>See new tickets and let the<br />team know what is ready.</p><span class="card-link">Open kitchen <span aria-hidden="true">↗</span></span></a></AuthorizeView>
+    <AuthorizeView Roles="Admin,Cashier"><a class="workspace-card" href="/cashier"><span class="workspace-icon cashier-icon" aria-hidden="true">▤</span><span class="card-step">03 / CASHIER</span><h3>Bring up the bill</h3><p>View every order clearly,<br />right down to the last item.</p><span class="card-link">Open cashier <span aria-hidden="true">↗</span></span></a></AuthorizeView>
+</div>
+<footer class="dashboard-footer"><span>335 Order <span aria-hidden="true">·</span> Made for your restaurant</span>
+@if (!DevelopmentPreview.Enabled(Environment, Configuration)) { <form method="post" action="/auth/logout"><AntiforgeryToken /><button class="quiet-button" type="submit">Sign out</button></form> }
+</footer>

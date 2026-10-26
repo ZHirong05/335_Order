@@ -1,0 +1,21 @@
+@page "/setup"
+@inject Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> Users
+<h1>First-run administrator setup</h1>
+@if (exists) { <p>Setup is complete. <a href="/login">Sign in</a>.</p> }
+else
+{
+    <p>The server owner must configure Setup__Token before setup. Passwords need 12 characters, uppercase, lowercase, a number and a symbol.</p>
+    @if (Failed) { <p role="alert">Setup failed. Check the setup token, email and password requirements.</p> }
+    <form method="post" action="/auth/setup">
+        <AntiforgeryToken />
+        <label>Setup token <input name="token" type="password" required /></label>
+        <label>Admin email <input name="email" type="email" required /></label>
+        <label>Password <input name="password" type="password" minlength="12" required autocomplete="new-password" /></label>
+        <button type="submit">Create administrator</button>
+    </form>
+}
+@code {
+    private bool exists;
+    [SupplyParameterFromQuery(Name = "failed")] public bool Failed { get; set; }
+    protected override void OnInitialized() => exists = Users.Users.Any();
+}
