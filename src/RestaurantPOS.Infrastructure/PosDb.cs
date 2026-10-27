@@ -12,17 +12,30 @@ public sealed class PosDb(DbContextOptions<PosDb> options) : IdentityDbContext<A
     public DbSet<DiningTable> Tables => Set<DiningTable>();
     public DbSet<MenuCategory> Categories => Set<MenuCategory>();
     public DbSet<MenuItem> Menu => Set<MenuItem>();
+    public DbSet<MenuItemVariation> MenuVariations => Set<MenuItemVariation>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<KitchenTicket> Tickets => Set<KitchenTicket>();
     public DbSet<OrderEvent> Events => Set<OrderEvent>();
     public DbSet<RequestRecord> Requests => Set<RequestRecord>();
+    public DbSet<Payment> Payments => Set<Payment>();
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);
         var money = new ValueConverter<decimal, long>(v => decimal.ToInt64(v * 100m), v => v / 100m);
         b.Entity<MenuItem>().Property(x => x.Price).HasConversion(money);
+        b.Entity<MenuItemVariation>().Property(x => x.AdditionalPrice).HasConversion(money);
+        b.Entity<MenuItemVariation>().HasIndex(x => new { x.MenuItemId, x.Name }).IsUnique();
+        b.Entity<MenuItem>().HasMany(x => x.Variations).WithOne().HasForeignKey(x => x.MenuItemId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<MenuItemVariation>().ToTable(t => t.HasCheckConstraint("CK_VariationPrice", "AdditionalPrice >= 0"));
         b.Entity<OrderItem>().Property(x => x.UnitPriceSnapshot).HasConversion(money);
+        b.Entity<Payment>().Property(x => x.Amount).HasConversion(money);
+        b.Entity<Payment>().Property(x => x.CashTendered).HasConversion(money);
+        b.Entity<Payment>().Property(x => x.Change).HasConversion(money);
+        b.Entity<Payment>().HasIndex(x => x.IdempotencyKey).IsUnique();
+        b.Entity<Payment>().HasOne<Order>().WithMany().HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<Payment>().HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ReceivedByUserId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<Payment>().ToTable(t => t.HasCheckConstraint("CK_Payment", "Amount > 0 AND CashTendered >= Amount AND \"Change\" = CashTendered - Amount AND Method >= 0 AND Method <= 4 AND (Method = 0 OR \"Change\" = 0)"));
         b.Entity<DiningTable>().HasIndex(x => x.Number).IsUnique();
         b.Entity<DiningTable>().Property(x => x.Version).IsConcurrencyToken();
         b.Entity<Order>().Property(x => x.Version).IsConcurrencyToken();

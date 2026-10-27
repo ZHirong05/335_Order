@@ -2,11 +2,13 @@
 
 Local-first .NET 10 Blazor Interactive Server restaurant ordering and kitchen display. SQLite and ASP.NET Core Identity run on one PC. No external services are needed at runtime.
 
-**Status: tested first vertical slice, not a complete production POS.** Ordering, append-only kitchen tickets, preparation states, audited cancellations, role login, bill viewing/printing, migration and online backup are implemented. Payments, split bills, refunds, close, reports and admin CRUD remain pending. Do not use it for live payment collection. See [implementation plan](docs/PLAN.md).
+**Status: development POS, not a complete production release.** Ordering, kitchen tickets, audited cancellations, role login, bill previews/printing, full-bill checkout, migration and online backup are implemented. Partial/split payments, refunds, reports and admin CRUD remain pending. Complete restaurant acceptance testing before live payment collection. See [implementation plan](docs/PLAN.md).
 
 ## Start on a Windows development laptop
 
 For a quick preview without signing in, run `dotnet run --project src/RestaurantPOS.Web --launch-profile http` and open **http://localhost:5083/dashboard**. Development automatically enables sample data and a preview Admin identity. Production always requires authentication. No preview password is created. To test actual staff logins, disable preview as shown below. Existing demo passwords remain unchanged.
+
+For automatic rebuilds during development, use `dotnet watch --no-hot-reload --project src/RestaurantPOS.Web --launch-profile http`. This fully restarts the app after code changes, which also rebuilds EF's cached model and applies migrations at startup. After adding entities or migrations, stop any existing hot-reload session with Ctrl+C before starting this command. Do not run two instances against the same development output directory.
 
 Install .NET 10 SDK. From this repository directory, in PowerShell:
 
@@ -27,12 +29,14 @@ Open **http://localhost:5083/login**. Accounts: `admin@demo.local`, `waiter@demo
 
 Use three separate browser profiles/browsers (e.g. Edge profile, Chrome profile and Firefox) to keep separate waiter, kitchen and cashier sessions. Multiple ordinary tabs share a login cookie; multiple incognito windows may also share a cookie jar.
 
-1. Waiter: `/order`, select an unused table or takeaway, add dishes/notes and send.
-2. Kitchen: `/kitchen`, enable sound with the button, see the committed ticket appear, acknowledge and mark ready. Initial historical tickets do not beep. Keep the browser foregrounded; mobile policies may suspend audio/background work.
-3. Cashier: `/cashier`, select the order and view/print its snapshot bill. Waiters may view their bills and cancel items with a reason. Use `/order/{id}` to append items; each submission creates another ticket.
+1. Waiter: `/order` starts with **Take away** and **Dine-in** cards. Take away goes directly to food; dine-in opens a grid of all active tables. An available table starts a new order; an occupied table adds to its existing order. Food appears in separate category grids with category filters and search. Tap food, select its variation and quantity, add kitchen notes, then **Add to order**. Review the cart and **Send to kitchen**.
+2. Kitchen: `/kitchen` shows the newest tickets first. Enable sound with the button, see committed tickets appear, acknowledge and mark ready. Initial historical tickets do not beep. Keep the browser foregrounded; mobile policies may suspend audio/background work. Checkout does not hide unfinished food: paid New/Preparing tickets stay visible and can still be marked ready.
+3. Cashier: `/cashier` displays the newest orders first in bill preview cards with item quantities, variation names, notes and balances. Cards update after committed events and reconcile every five seconds. Select a card to view the bill. Admin/Cashier can choose **Checkout / settle bill**, select Cash/QR/Transfer/Card/Other, enter cash received or a reference, then **Confirm payment & close order**. Payment and closure commit together; cash change is tracked separately, the bill balance becomes zero, and its table becomes available. Print the settled receipt or return to all bills. Fully cancelled/zero-value orders can close without recording an invented payment. Waiters can view bills and cancel unpaid items but cannot checkout. Use `/order/{id}` to append items to an open order; each submission creates another ticket.
 4. Stop with Ctrl+C, start again, and verify orders remain. The default development database is `src/RestaurantPOS.Web/data/restaurant.db`. Data, key files and backups are ignored by Git. Do not delete this directory if you want to keep data.
 
 Kitchen notifications use the existing Blazor connection and database reconciliation every five seconds. The built-in reconnect dialog covers lost connections. A separate authorized business hub is available for future integrations; SQLite remains authoritative.
+
+Development seed adds **Regular / Large (+RM 2.00)** for the demo rice/noodle dishes and **Hot / Iced (+RM 0.50)** for Teh Tarik and Kopi O. These are sample options, not confirmed restaurant pricing. Restart applies the additive `MenuVariations` migration and fills options on existing demo items that have none; existing orders and menu prices remain unchanged. Items without configured variations offer **Standard**. Server-side validation checks that a selected variation belongs to the item and is available; the selected name and final price are snapshotted for kitchen and bills. Variation administration is a later milestone.
 
 ## First-run administrator without demo seed
 

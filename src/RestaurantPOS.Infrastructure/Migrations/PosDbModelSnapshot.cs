@@ -292,6 +292,39 @@ namespace RestaurantPOS.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RestaurantPOS.Core.MenuItemVariation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("AdditionalPrice")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MenuItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MenuItemId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("MenuVariations", t =>
+                        {
+                            t.HasCheckConstraint("CK_VariationPrice", "AdditionalPrice >= 0");
+                        });
+                });
+
             modelBuilder.Entity("RestaurantPOS.Core.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -421,6 +454,57 @@ namespace RestaurantPOS.Infrastructure.Migrations
                     b.ToTable("OrderItems", t =>
                         {
                             t.HasCheckConstraint("CK_Quantity", "Quantity > 0 AND CancelledQuantity >= 0 AND CancelledQuantity <= Quantity");
+                        });
+                });
+
+            modelBuilder.Entity("RestaurantPOS.Core.Payment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("CashTendered")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Change")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReceivedByUserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ReceivedByUserId");
+
+                    b.ToTable("Payments", t =>
+                        {
+                            t.HasCheckConstraint("CK_Payment", "Amount > 0 AND CashTendered >= Amount AND \"Change\" = CashTendered - Amount AND Method >= 0 AND Method <= 4 AND (Method = 0 OR \"Change\" = 0)");
                         });
                 });
 
@@ -597,6 +681,15 @@ namespace RestaurantPOS.Infrastructure.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("RestaurantPOS.Core.MenuItemVariation", b =>
+                {
+                    b.HasOne("RestaurantPOS.Core.MenuItem", null)
+                        .WithMany("Variations")
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RestaurantPOS.Core.Order", b =>
                 {
                     b.HasOne("RestaurantPOS.Infrastructure.ApplicationUser", null)
@@ -637,6 +730,21 @@ namespace RestaurantPOS.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RestaurantPOS.Core.Payment", b =>
+                {
+                    b.HasOne("RestaurantPOS.Core.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RestaurantPOS.Infrastructure.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ReceivedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RestaurantPOS.Core.RequestRecord", b =>
                 {
                     b.HasOne("RestaurantPOS.Core.Order", null)
@@ -649,6 +757,11 @@ namespace RestaurantPOS.Infrastructure.Migrations
             modelBuilder.Entity("RestaurantPOS.Core.KitchenTicket", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("RestaurantPOS.Core.MenuItem", b =>
+                {
+                    b.Navigation("Variations");
                 });
 
             modelBuilder.Entity("RestaurantPOS.Core.Order", b =>

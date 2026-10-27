@@ -52,11 +52,12 @@ public static class Endpoints
         });
         api.MapGet("/antiforgery", (HttpContext c, IAntiforgery a) => new { token = a.GetAndStoreTokens(c).RequestToken, header = "RequestVerificationToken" });
         var orders = api.MapGroup("").RequireAuthorization(p => p.RequireRole("Admin", "Waiter", "Cashier"));
-        orders.MapGet("/menu", async (OrderService s) => (await s.Menu()).Select(x => new { x.Id, x.Name, x.Description, x.Price, Category = x.Category.Name }));
+        orders.MapGet("/menu", async (OrderService s) => (await s.Menu()).Select(x => new { x.Id, x.Name, x.Description, x.Price, Category = x.Category.Name, Variations = x.Variations.OrderBy(v => v.SortOrder).Select(v => new { v.Id, v.Name, v.AdditionalPrice, Price = x.Price + v.AdditionalPrice }) }));
         orders.MapGet("/tables", async (OrderService s) => { var a = await s.Active(); return (await s.Tables()).Select(t => new { t.Id, t.Number, t.Capacity, Status = a.Any(o => o.TableId == t.Id) ? "Occupied" : "Available" }); });
         orders.MapGet("/orders/active", async (OrderService s) => (await s.Active()).Select(x => new { x.Id, x.OrderNumber, x.TableId, x.OrderType, x.Status, x.Version }));
         orders.MapGet("/orders/{id:guid}", (Guid id, OrderService s) => s.Bill(id));
         orders.MapGet("/orders/{id:guid}/bill", (Guid id, OrderService s) => s.Bill(id));
+        api.MapPost("/orders/{id:guid}/checkout", (Guid id, CheckoutInput i, OrderService s, ClaimsPrincipal u) => s.Checkout(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Cashier"));
         api.MapPost("/orders", async (CreateOrderInput i, OrderService s, ClaimsPrincipal u) => { var id = await s.Create(i, Actor(u)); return Results.Created($"/api/orders/{id}", new { id }); }).RequireAuthorization(p => p.RequireRole("Admin", "Waiter"));
         api.MapPost("/orders/{id:guid}/items", (Guid id, AddItemsInput i, OrderService s, ClaimsPrincipal u) => s.Add(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Waiter"));
         api.MapPost("/orders/{id:guid}/items/{itemId:guid}/cancel", (Guid id, Guid itemId, CancelInput i, OrderService s, ClaimsPrincipal u) => s.Cancel(id, itemId, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Waiter"));

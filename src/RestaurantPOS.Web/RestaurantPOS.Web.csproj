@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <PropertyGroup>
+    <!-- EF entity and migration changes require a full app restart. See the development watch command in README.md. -->
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

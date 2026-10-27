@@ -1,49 +1,189 @@
-@page "/cashier"
+﻿@page "/cashier"
 @page "/cashier/{Id:guid}"
 @attribute [Authorize(Roles = "Admin,Cashier,Waiter")]
 @rendermode InteractiveServer
+@implements IAsyncDisposable
 @inject OrderService Service
+@inject BusinessNotifications Notifications
 @inject AuthenticationStateProvider Authentication
 @inject IJSRuntime JS
-<PageTitle>Bill · 335 Order</PageTitle>
-<h1>Order bills</h1>
-<p class="no-print"><a href="/dashboard">Dashboard</a> · <button @onclick="Load">Refresh</button></p>
-@if (message != null) { <p role="status">@message</p> }
-@if (orders == null) { <p>Loading orders…</p> }
+@inject ILogger<Cashier> Logger
+<PageTitle>Bills · 335 Order</PageTitle>
+<div class="flow-heading no-print @(!Id.HasValue ? "flow-actions" : "")">
+    @if (Id.HasValue) { <h1>Order bill</h1> }
+    <button class="secondary-button" disabled="@(loading || busy)" @onclick="Load">@(loading ? "Refreshing…" : "Refresh bills")</button>
+</div>
+@if (Submitted) { <p class="notice no-print" role="status">Order sent to the kitchen successfully.</p> }
+@if (message != null) { <p class="notice no-print" role="status">@message</p> }
+@if (orders == null && loading) { <p>Loading orders…</p> }
+else if (orders == null) { <div class="empty-panel">Bill data is unavailable. Use Refresh bills to try again.</div> }
 else if (!Id.HasValue)
 {
-    @if (orders.Count == 0) { <p>No active orders.</p> }
-    @foreach (var o in orders) { <p><a href="@($"/cashier/{o.Id}")">@o.OrderNumber · @(o.Table == null ? "Takeaway" : $"Table {o.Table.Number}")</a></p> }
+    <div class="bill-list-summary"><span><strong>@orders.Count</strong> active orders</span><span>Total outstanding <strong>RM @orders.Sum(OrderTotal).ToString("0.00")</strong></span></div>
+    @if (orders.Count == 0) { <div class="empty-panel">No active bills. New orders will appear here automatically.</div> }
+    <div class="bill-grid">
+        @foreach (var o in orders)
+        {
+            var lines = o.Items.Where(x => x.Quantity > x.CancelledQuantity).OrderBy(x => x.CreatedAtUtc).ToList();
+            <a class="bill-preview" href="@($"/cashier/{o.Id}")" aria-label="@($"Open bill for {Destination(o)}, order {o.OrderNumber}")">
+                <div class="bill-preview-heading"><div><span class="card-step">@(o.Table == null ? "TAKE AWAY" : "DINE-IN")</span><h2>@Destination(o)</h2></div><span class="status-badge status-occupied">@o.Status</span></div>
+                <p class="bill-order-number">@o.OrderNumber</p>
+                <p class="bill-time">@LocalTime(o.CreatedAtUtc) MYT · @lines.Sum(x => x.Quantity - x.CancelledQuantity) items</p>
+                <div class="bill-preview-lines">
+                    @foreach (var line in lines.Take(4))
+                    {
+                        <div class="bill-preview-line"><div><strong>@(line.Quantity - line.CancelledQuantity) × @line.ItemNameSnapshot</strong>@if (line.Notes.Length > 0) { <small>@line.Notes</small> }</div><span>RM @(((line.Quantity - line.CancelledQuantity) * line.UnitPriceSnapshot).ToString("0.00"))</span></div>
+                    }
+                    @if (lines.Count > 4) { <p class="muted">+ @(lines.Count - 4) more items in the bill</p> }
+                    @if (lines.Count == 0) { <p class="muted">All items have been cancelled.</p> }
+                </div>
+                @if (o.Notes.Length > 0) { <p class="bill-order-notes">@o.Notes</p> }
+                <div class="bill-preview-total"><span>Balance<strong>RM @OrderTotal(o).ToString("0.00")</strong></span><span class="bill-open-link">View bill →</span></div>
+            </a>
+        }
+    </div>
 }
 else if (bill != null)
 {
-    <article class="receipt">
-        <h2>335 Order · Provisional bill</h2>
+    <p class="no-print"><a href="/cashier">← All bills</a></p>
+    <article class="receipt card">
+        <h2>335 Order · @(bill.Status == OrderStatus.Closed ? "Closed bill / receipt" : "Provisional bill")</h2>
         <p>@bill.OrderNumber · @bill.Destination</p>
-        <p>@TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Kuala_Lumpur")).ToString("yyyy-MM-dd HH:mm") MYT</p>
-        <table><thead><tr><th>Item</th><th>Qty</th><th>Unit RM</th><th>Total RM</th></tr></thead><tbody>
-        @foreach (var i in bill.Items) { <tr><td>@i.Name<br />@i.Notes</td><td>@i.Quantity</td><td>@i.UnitPrice.ToString("0.00")</td><td>@( (i.Quantity * i.UnitPrice).ToString("0.00") )</td></tr> }
-        </tbody></table>
+        <p>@LocalTime(DateTime.UtcNow) MYT</p>
+        <div class="receipt-table"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit RM</th><th>Total RM</th></tr></thead><tbody>
+        @foreach (var i in bill.Items) { <tr><td>@i.Name<br />@i.Notes</td><td>@i.Quantity</td><td>@i.UnitPrice.ToString("0.00")</td><td>@((i.Quantity * i.UnitPrice).ToString("0.00"))</td></tr> }
+        </tbody></table></div>
         <p><strong>Total RM @bill.Total.ToString("0.00")</strong></p>
         <p>Paid RM @bill.Paid.ToString("0.00") · Balance RM @bill.Balance.ToString("0.00")</p>
-        <p>Payment recording is not available in this first delivery.</p>
+        @foreach (var payment in bill.Payments ?? [])
+        {
+            <div class="receipt-payment"><p>@payment.Method · RM @payment.Amount.ToString("0.00") · @LocalTime(payment.ReceivedAtUtc) MYT</p>
+            @if (payment.Method == PaymentMethod.Cash) { <p>Cash received RM @payment.CashTendered.ToString("0.00") · Change RM @payment.Change.ToString("0.00")</p> }
+            @if (payment.Reference.Length > 0) { <p>Reference: @payment.Reference</p> }</div>
+        }
+        @if (bill.Status == OrderStatus.Closed) { <p class="settled-label">CLOSED · Balance settled</p> }
     </article>
     <button class="no-print" @onclick="Print">Print bill</button>
+    @if (bill.Status != OrderStatus.Closed && !checkoutRecorded)
+    {
+        <AuthorizeView Roles="Admin,Cashier">
+            <section class="checkout-panel no-print">
+                <div class="cart-heading"><h2>Checkout</h2><strong>RM @bill.Balance.ToString("0.00")</strong></div>
+                @if (!checkoutOpen)
+                {
+                    <p>Settle this bill and close the order to make the table available again.</p>
+                    <button disabled="@(busy || loading)" @onclick="OpenCheckout">@(bill.Balance == 0 ? "Close zero-balance order" : "Checkout / settle bill")</button>
+                }
+                else
+                {
+                    <form @onsubmit="Checkout" @onsubmit:preventDefault="true">
+                        @if (bill.Balance > 0)
+                        {
+                            <p class="muted">Record only a payment you have received.</p>
+                            <label>Payment method<select @bind="paymentMethod" disabled="@(busy || checkoutRequest != null)">@foreach (var method in Enum.GetValues<PaymentMethod>()) { <option value="@method">@method</option> }</select></label>
+                            @if (paymentMethod == PaymentMethod.Cash)
+                            {
+                                <label>Cash received (RM)<input type="number" min="0" step="0.01" required @bind="cashReceived" disabled="@(busy || checkoutRequest != null)" /></label>
+                                <p>Change: <strong>RM @Math.Max(0m, (cashReceived ?? 0m) - bill.Balance).ToString("0.00")</strong></p>
+                                @if ((cashReceived ?? 0m) < bill.Balance) { <p class="error">Cash received must cover RM @bill.Balance.ToString("0.00").</p> }
+                            }
+                            <label>Payment reference (optional)<input maxlength="100" @bind="paymentReference" disabled="@(busy || checkoutRequest != null)" /></label>
+                        }
+                        else { <p>No payment is due. Confirm to close this order.</p> }
+                        <button type="submit" disabled="@(busy || loading || (bill.Balance > 0 && paymentMethod == PaymentMethod.Cash && (cashReceived ?? 0m) < bill.Balance))">@(busy ? "Completing checkout…" : checkoutRequest != null ? "Retry checkout confirmation" : bill.Balance == 0 ? "Confirm close order" : "Confirm payment & close order")</button>
+                        @if (checkoutRequest == null) { <button type="button" class="secondary-button" disabled="@busy" @onclick="() => checkoutOpen = false">Cancel</button> }
+                    </form>
+                }
+            </section>
+        </AuthorizeView>
+    }
+    @if (bill.Status != OrderStatus.Closed && !checkoutRecorded)
+    {
     <AuthorizeView Roles="Admin,Waiter">
-        <p><a href="@($"/order/{Id}")">Add more items</a></p>
-        <h2>Cancel items</h2>
-        <label>Item <select @bind="cancelId"><option value="@Guid.Empty">Choose item</option>@foreach (var i in bill.Items.Where(x => x.Quantity > 0)) { <option value="@i.Id">@i.Name (@i.Quantity)</option> }</select></label>
-        <label>Quantity <input type="number" min="1" @bind="cancelQuantity" /></label>
-        <label>Reason <input maxlength="500" @bind="reason" /></label>
-        <button disabled="@busy" @onclick="Cancel">Cancel and notify kitchen</button>
+        <div class="no-print cancellation-panel">
+            <p><a class="action" href="@($"/order/{Id}")">Add more items</a></p>
+            <h2>Cancel items</h2>
+            <label>Item <select @bind="cancelId"><option value="@Guid.Empty">Choose item</option>@foreach (var i in bill.Items.Where(x => x.Quantity > 0)) { <option value="@i.Id">@i.Name (@i.Quantity)</option> }</select></label>
+            <label>Quantity <input type="number" min="1" @bind="cancelQuantity" /></label>
+            <label>Reason <input maxlength="500" @bind="reason" /></label>
+            <button disabled="@busy" @onclick="Cancel">Cancel and notify kitchen</button>
+        </div>
     </AuthorizeView>
+    }
 }
 @code {
     [Parameter] public Guid? Id { get; set; }
-    private List<Order>? orders; private Bill? bill; private string? message; private Guid cancelId; private int cancelQuantity = 1; private string reason = ""; private bool busy;
-    protected override Task OnParametersSetAsync() => Load();
-    private async Task Load() { try { orders = await Service.Active(); if (Id.HasValue) bill = await Service.Bill(Id.Value); } catch { message = "Could not load order. Use Refresh to retry."; } }
+    [SupplyParameterFromQuery] public bool Submitted { get; set; }
+    private List<Order>? orders;
+    private Bill? bill;
+    private string? message;
+    private Guid cancelId;
+    private int cancelQuantity = 1;
+    private string reason = "";
+    private bool busy, loading, disposed;
+    private bool checkoutOpen, checkoutRecorded;
+    private PaymentMethod paymentMethod = PaymentMethod.Cash;
+    private decimal? cashReceived;
+    private string paymentReference = "", checkoutKey = Guid.NewGuid().ToString();
+    private CheckoutInput? checkoutRequest;
+    private readonly CancellationTokenSource stop = new();
+    private Task? reconciliation;
+    protected override void OnInitialized() { Notifications.Changed += Changed; reconciliation = Poll(); }
+    protected override async Task OnParametersSetAsync() { message = null; bill = null; cancelId = Guid.Empty; reason = ""; cancelQuantity = 1; checkoutOpen = false; checkoutRecorded = false; checkoutRequest = null; checkoutKey = Guid.NewGuid().ToString(); await Load(); }
+    private async Task Load()
+    {
+        loading = true;
+        try
+        {
+            var requestedId = Id;
+            var loadedOrders = await Service.Active();
+            var loadedBill = requestedId.HasValue ? await Service.Bill(requestedId.Value) : null;
+            if (requestedId != Id) return;
+            orders = loadedOrders; bill = loadedBill; message = null;
+        }
+        catch (BusinessException ex) { bill = null; message = ex.Message; }
+        catch (Exception ex)
+        {
+            bill = null;
+            Logger.LogError(ex, "Could not load cashier data for order {OrderId}", Id);
+            message = "Could not load orders. Use Refresh bills to retry.";
+        }
+        finally { loading = false; }
+    }
+    private void Changed(BusinessEvent notification) { if (!disposed && !Id.HasValue) _ = InvokeAsync(async () => { await Load(); StateHasChanged(); }); }
+    private async Task Poll()
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+            while (await timer.WaitForNextTickAsync(stop.Token))
+                if (!Id.HasValue) await InvokeAsync(async () => { await Load(); StateHasChanged(); });
+        }
+        catch (OperationCanceledException) { }
+    }
+    private static decimal OrderTotal(Order o) => o.Items.Sum(x => (x.Quantity - x.CancelledQuantity) * x.UnitPriceSnapshot);
+    private static string Destination(Order o) => o.Table == null ? "Take away" : $"Table {o.Table.Number}";
+    private static string LocalTime(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(utc, TimeZoneInfo.FindSystemTimeZoneById("Asia/Kuala_Lumpur")).ToString("dd MMM, HH:mm");
     private async Task Print() => await JS.InvokeVoidAsync("window.print");
+    private void OpenCheckout() { checkoutOpen = true; cashReceived = bill!.Balance; paymentMethod = PaymentMethod.Cash; paymentReference = ""; checkoutRequest = null; checkoutKey = Guid.NewGuid().ToString(); }
+    private async Task Checkout()
+    {
+        if (busy || bill == null || !Id.HasValue) return;
+        busy = true;
+        try
+        {
+            var u = (await Authentication.GetAuthenticationStateAsync()).User;
+            if (!(u.IsInRole("Admin") || u.IsInRole("Cashier"))) throw new BusinessException("Cashier permission is required", 403);
+            checkoutRequest ??= new(bill.Version, bill.Balance, paymentMethod, paymentMethod == PaymentMethod.Cash ? cashReceived : null, paymentReference, checkoutKey);
+            await Service.Checkout(Id.Value, checkoutRequest, u.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            checkoutRecorded = true; checkoutOpen = false; checkoutRequest = null;
+            await Load();
+            message = bill?.Destination.StartsWith("Table ", StringComparison.Ordinal) == true ? $"Checkout completed. {bill.Destination} is available again." : "Checkout completed. Takeaway order closed.";
+        }
+        catch (BusinessException e) { checkoutRequest = null; checkoutKey = Guid.NewGuid().ToString(); message = e.Message; }
+        catch { message = "Could not confirm checkout. Retry confirmation with the same details, or refresh the bill to check its status."; }
+        finally { busy = false; }
+    }
     private async Task Cancel()
     {
         busy = true;
@@ -58,4 +198,5 @@ else if (bill != null)
         catch { message = "Cancellation could not be confirmed. Refresh before retrying."; }
         finally { busy = false; }
     }
+    public async ValueTask DisposeAsync() { disposed = true; Notifications.Changed -= Changed; stop.Cancel(); if (reconciliation != null) await reconciliation; stop.Dispose(); }
 }

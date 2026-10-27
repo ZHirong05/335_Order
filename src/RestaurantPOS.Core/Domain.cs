@@ -3,6 +3,20 @@ namespace RestaurantPOS.Core;
 public enum OrderType { DineIn, Takeaway }
 public enum OrderStatus { Open, AwaitingPayment, Closed }
 public enum KitchenStatus { New, Preparing, Ready, Cancelled }
+public enum PaymentMethod { Cash, QR, Transfer, Card, Other }
+public sealed class Payment
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid OrderId { get; set; }
+    public decimal Amount { get; set; }
+    public PaymentMethod Method { get; set; }
+    public decimal CashTendered { get; set; }
+    public decimal Change { get; set; }
+    public DateTime ReceivedAtUtc { get; set; } = DateTime.UtcNow;
+    public string ReceivedByUserId { get; set; } = "";
+    public string Reference { get; set; } = "";
+    public string IdempotencyKey { get; set; } = "";
+}
 public sealed class DiningTable
 {
     public int Id { get; set; }
@@ -26,6 +40,16 @@ public sealed class MenuItem
     public string Name { get; set; } = "";
     public string Description { get; set; } = "";
     public decimal Price { get; set; }
+    public bool IsAvailable { get; set; } = true;
+    public int SortOrder { get; set; }
+    public List<MenuItemVariation> Variations { get; set; } = [];
+}
+public sealed class MenuItemVariation
+{
+    public int Id { get; set; }
+    public int MenuItemId { get; set; }
+    public string Name { get; set; } = "";
+    public decimal AdditionalPrice { get; set; }
     public bool IsAvailable { get; set; } = true;
     public int SortOrder { get; set; }
 }
@@ -94,18 +118,20 @@ public sealed class RequestRecord
     public string RequestHash { get; set; } = "";
     public Guid OrderId { get; set; }
 }
-public record ItemInput(int MenuItemId, int Quantity, string Notes = "");
+public record ItemInput(int MenuItemId, int Quantity, string Notes = "", int? VariationId = null);
 public record CreateOrderInput(OrderType OrderType, int? TableId, string Notes, List<ItemInput> Items, string IdempotencyKey);
 public record AddItemsInput(long Version, List<ItemInput> Items, string IdempotencyKey);
 public record CancelInput(long Version, int Quantity, string Reason);
 public record TicketStatusInput(long Version, KitchenStatus Status);
+public record CheckoutInput(long Version, decimal Amount, PaymentMethod Method, decimal? CashTendered, string Reference, string IdempotencyKey);
+public record PaymentView(Guid Id, decimal Amount, PaymentMethod Method, decimal CashTendered, decimal Change, string Reference, DateTime ReceivedAtUtc);
 public record BusinessEvent(Guid EventId, string EventType, Guid OrderId, long Version);
 public record BillLine(Guid Id, string Name, int Quantity, decimal UnitPrice, string Notes);
-public record Bill(Guid OrderId, string OrderNumber, string Destination, long Version, IReadOnlyList<BillLine> Items)
+public record Bill(Guid OrderId, string OrderNumber, string Destination, long Version, IReadOnlyList<BillLine> Items, OrderStatus Status = OrderStatus.Open, IReadOnlyList<PaymentView>? Payments = null)
 {
     public decimal Total => Items.Sum(x => x.Quantity * x.UnitPrice);
-    public decimal Paid => 0m;
-    public decimal Balance => Total;
+    public decimal Paid => Payments?.Sum(x => x.Amount) ?? 0m;
+    public decimal Balance => Total - Paid;
 }
 public sealed class BusinessException(string message, int statusCode = 409) : Exception(message)
 {

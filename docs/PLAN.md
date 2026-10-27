@@ -13,15 +13,17 @@ Core holds entities and DTOs; Infrastructure owns Identity, SQLite and transacti
 - [x] EF migration, snapshots, idempotent creation and active-table exclusion
 - [x] Waiter ordering, append items, kitchen transitions/cancellation, cashier bill
 - [x] Role-authorized API and business hub
+- [x] Guided order-type/table/food selection, priced variations, category grids and cashier bill preview grid
+- [x] Newest-first kitchen/cashier displays and atomic full-bill checkout with cash tender/change, receipt and table release
 - [x] SQLite tests, backup smoke test, HTTP integration launch verification
 - [x] Documentation and Windows scripts (scripts need target-PC validation)
 
 ## Follow-up milestones (not part of first slice)
-- Transactional partial/split payments, allocations, tender/change, refunds, close
+- Transactional partial/split payments, allocations and refunds (full-bill payment/close and tender/change implemented)
 - Daily/monthly reports, CSV and business cutoff boundaries
-- Full admin CRUD UI/API, staff lifecycle and settings
+- Full admin CRUD UI/API (including variation editing), staff lifecycle and settings
 - Durable outbox/event replay and kitchen cancellation acknowledgement (gesture-enabled sound implemented)
 - Localization resources for English/Chinese/Malay (current page language is English)
 - Production hardening, full requested test matrix, browser/Android acceptance and service deployment validation
 
-First-slice unpaid orders intentionally remain open. Do not use this delivery to collect live restaurant payments.
+Unpaid orders remain open until checkout settles the exact balance. Closing releases the table; unfinished kitchen work stays visible. Production acceptance, refund support and financial reporting are still pending.

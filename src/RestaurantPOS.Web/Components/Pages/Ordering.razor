@@ -1,78 +1,249 @@
-@page "/order"
+﻿@page "/order"
 @page "/order/{Id:guid}"
 @attribute [Authorize(Roles = "Admin,Waiter")]
 @rendermode InteractiveServer
 @inject OrderService Service
 @inject AuthenticationStateProvider Authentication
 @inject NavigationManager Nav
-<PageTitle>Waiter · 335 Order</PageTitle>
-<h1>@(Id.HasValue ? "Add items to order" : "New order")</h1>
-<p><a href="/dashboard">Dashboard</a></p>
-@if (error != null) { <p class="error" role="alert">@error</p> }
-@if (menu == null) { <p>Loading menu…</p> }
-else
-{
-    @if (!Id.HasValue)
+<PageTitle>Take an order · 335 Order</PageTitle>
+<div class="ordering-content" inert="@(selected != null)">
+    @if (step == OrderStep.Table)
     {
-        <label>Order type <select @bind="type"><option value="DineIn">Dine-in</option><option value="Takeaway">Takeaway</option></select></label>
-        @if (type == OrderType.DineIn)
-        {
-            <label>Available table <select @bind="tableId"><option value="0">Choose a table</option>@foreach (var t in tables) { <option value="@t.Id">Table @t.Number</option> }</select></label>
-        }
-    }
-    <label>Search menu <input @bind="search" @bind:event="oninput" /></label>
-    <label>Category <select @bind="category"><option value="">All categories</option>@foreach (var c in menu.Select(x => x.Category.Name).Distinct()) { <option>@c</option> }</select></label>
-    <div class="menu-grid">
-    @foreach (var m in menu.Where(m => m.Name.Contains(search, StringComparison.OrdinalIgnoreCase) && (category == "" || m.Category.Name == category)))
-    {
-        <button @onclick="() => Add(m)">@m.Name <strong>RM @m.Price.ToString("0.00")</strong></button>
-    }
-    </div>
-    <h2>New items</h2>
-    @if (cart.Count == 0) { <p>Tap a menu item to start.</p> }
-    @foreach (var line in cart)
-    {
-        <div class="card">
-            <strong>@line.Menu.Name</strong>
-            <label>Quantity <input type="number" min="1" max="99" @bind="line.Quantity" /></label>
-            <label>Kitchen notes <input maxlength="500" @bind="line.Notes" /></label>
-            <button @onclick="() => cart.Remove(line)">Remove</button>
+        <div class="flow-heading">
+            <div><p class="eyebrow">WAITER WORKSPACE</p><h1>Choose a table.</h1><p class="page-subtitle">Every table, ready at a glance.</p></div>
         </div>
     }
-    <p><strong>Total: RM @cart.Sum(x => x.Quantity * x.Menu.Price).ToString("0.00")</strong></p>
-    <label>Order notes <input maxlength="500" @bind="notes" /></label>
-    <button disabled="@(busy || cart.Count == 0)" @onclick="Submit">@(busy ? "Submitting…" : "Send to kitchen")</button>
-    <h2>Active orders</h2>
-    @foreach (var o in active) { <p><a href="@($"/order/{o.Id}")">@o.OrderNumber · @(o.TableId.HasValue ? $"Table {o.Table!.Number}" : "Takeaway")</a></p> }
+    <div class="order-toolbar @(step != OrderStep.Type ? "has-back" : "")">
+        <ol class="order-steps" aria-label="Order progress">
+            <li class="@(step == OrderStep.Type ? "current-step" : "")"><span class="step-label-full">1. Order type</span><span class="step-label-short">1. Type</span></li>
+            @if (type == OrderType.DineIn && step != OrderStep.Type) { <li class="@(step == OrderStep.Table ? "current-step" : "")"><span class="step-label-full">2. Select table</span><span class="step-label-short">2. Table</span></li> }
+            <li class="@(step == OrderStep.Food ? "current-step" : "")"><span class="step-label-full">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). Select food</span><span class="step-label-short">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). Food</span></li>
+        </ol>
+        @if (step != OrderStep.Type) { <button class="secondary-button order-back" disabled="@busy" @onclick="Back">← Back</button> }
+    </div>
+    @if (error != null) { <div class="notice error" role="alert">@error <button class="secondary-button" disabled="@busy" @onclick="Reload">Refresh data</button></div> }
+    @if (menu == null) { <p role="status">Loading menu and tables…</p> }
+    else if (step == OrderStep.Type)
+    {
+        <div class="order-type-grid">
+            <button class="selection-card order-type-card" @onclick="() => ChooseType(OrderType.Takeaway)">
+                <span class="choice-symbol" aria-hidden="true">↗</span><strong>Take away</strong><span>Pack it up. Choose food and send straight to the kitchen.</span><span class="choice-next">Select food →</span>
+            </button>
+            <button class="selection-card order-type-card" @onclick="() => ChooseType(OrderType.DineIn)">
+                <span class="choice-symbol" aria-hidden="true">▦</span><strong>Dine-in</strong><span>Settle in. Choose a table before adding food.</span><span class="choice-next">Select a table →</span>
+            </button>
+        </div>
+        @if (active.Count > 0)
+        {
+            <div class="section-heading"><h2>Continue an order</h2><span>Add items to an existing order</span></div>
+            <div class="continue-grid">@foreach (var o in active) { <a class="continue-order" href="@($"/order/{o.Id}")"><strong>@Destination(o)</strong><span>@ShortNumber(o.OrderNumber)</span><span aria-hidden="true">→</span></a> }</div>
+        }
+    }
+    else if (step == OrderStep.Table)
+    {
+        <div class="section-heading"><h2>Restaurant tables</h2><button class="secondary-button" @onclick="Reload">Refresh tables</button></div>
+        <p class="muted">Choose an available table to start an order, or an occupied table to add more food.</p>
+        @if (tables.Count == 0) { <div class="empty-panel">No active tables are configured. You can still create a takeaway order.</div> }
+        <div class="table-grid">
+            @foreach (var t in tables)
+            {
+                var occupied = active.FirstOrDefault(o => o.TableId == t.Id);
+                <button class="selection-card table-choice @(occupied != null ? "table-occupied" : "")" @onclick="() => ChooseTable(t)">
+                    <span class="status-badge @(occupied != null ? "status-occupied" : "status-available")">@(occupied == null ? "Available" : occupied.Status == OrderStatus.AwaitingPayment ? "Awaiting payment" : "Occupied")</span>
+                    <strong>Table @t.Number</strong><span>@t.Capacity seats</span><span class="choice-next">@(occupied == null ? "Start order →" : "Add to order →")</span>
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="order-context"><strong>@destination</strong><span>@(targetOrderId.HasValue ? "Adding items to an existing order" : "New order")</span></div>
+        <div class="ordering-layout">
+            <section aria-label="Menu">
+                <label class="menu-search">Search food or drinks<input type="search" placeholder="Search the menu…" @bind="search" @bind:event="oninput" /></label>
+                <div class="category-tabs" aria-label="Menu categories">
+                    <button class="category-tab @(categoryId == 0 ? "is-selected" : "")" aria-pressed="@(categoryId == 0 ? "true" : "false")" @onclick="() => categoryId = 0">All</button>
+                    @foreach (var group in menu.GroupBy(m => m.CategoryId))
+                    {
+                        <button class="category-tab @(categoryId == group.Key ? "is-selected" : "")" aria-pressed="@(categoryId == group.Key ? "true" : "false")" @onclick="() => categoryId = group.Key">@group.First().Category.Name</button>
+                    }
+                </div>
+                @if (!FilteredMenu.Any()) { <div class="empty-panel">No items match your search.</div> }
+                @foreach (var group in FilteredMenu.GroupBy(m => m.CategoryId))
+                {
+                    <section class="menu-category">
+                        <div class="section-heading"><h2>@group.First().Category.Name</h2><span>@group.Count() items</span></div>
+                        <div class="food-grid">
+                            @foreach (var item in group)
+                            {
+                                <button class="selection-card food-choice" disabled="@busy" @onclick="() => OpenPicker(item)">
+                                    <span class="food-initial" aria-hidden="true">@(string.IsNullOrWhiteSpace(item.Name) ? "?" : item.Name[..1])</span><strong>@item.Name</strong>
+                                    @if (item.Description.Length > 0) { <span>@item.Description</span> }
+                                    <span class="food-choice-bottom"><strong>RM @item.Price.ToString("0.00")</strong><span>@(item.Variations.Count > 0 ? "Choose variation +" : "Customize +")</span></span>
+                                </button>
+                            }
+                        </div>
+                    </section>
+                }
+            </section>
+            <aside class="order-cart" aria-label="Current order">
+                <div class="cart-heading"><h2>Your order</h2><span>@cart.Sum(x => x.Quantity) items</span></div>
+                @if (cart.Count == 0) { <div class="empty-cart"><span aria-hidden="true">＋</span><p>Something delicious starts here.</p><small>Select food to choose a variation and add it to your order.</small></div> }
+                @foreach (var line in cart)
+                {
+                    <div class="cart-line" @key="line">
+                        <div class="cart-line-heading"><strong>@line.MenuName</strong><button class="text-button" disabled="@busy" @onclick="() => cart.Remove(line)" aria-label="@($"Remove {line.MenuName} {line.VariationName}")">Remove</button></div>
+                        <span class="muted">@line.VariationName · RM @line.UnitPrice.ToString("0.00") each</span>
+                        @if (line.Notes.Length > 0) { <p class="cart-notes">@line.Notes</p> }
+                        <div class="cart-quantity"><label>Quantity<input type="number" min="1" max="99" disabled="@busy" @bind="line.Quantity" /></label><strong>RM @((line.Quantity * line.UnitPrice).ToString("0.00"))</strong></div>
+                    </div>
+                }
+                @if (!targetOrderId.HasValue) { <label>Order notes<textarea maxlength="500" disabled="@busy" placeholder="Any instructions for the whole order?" @bind="notes"></textarea></label> }
+                <div class="cart-total"><span>New items total</span><strong>RM @cart.Sum(x => x.Quantity * x.UnitPrice).ToString("0.00")</strong></div>
+                <button class="submit-order" disabled="@(busy || cart.Count == 0)" @onclick="Submit">@(busy ? "Sending to kitchen…" : "Send to kitchen →")</button>
+            </aside>
+        </div>
+    }
+</div>
+@if (selected != null)
+{
+    <div class="picker-backdrop" @onclick="ClosePicker" @onkeydown="PickerKeyDown">
+        <section class="item-picker" role="dialog" aria-modal="true" aria-labelledby="picker-title" tabindex="-1" @ref="picker" @onclick:stopPropagation="true">
+            <form @onsubmit="AddToOrder" @onsubmit:preventDefault="true">
+                <div class="picker-heading"><div><p class="eyebrow">MAKE IT YOURS</p><h2 id="picker-title">@selected.Name</h2></div><button type="button" class="secondary-button" @onclick="ClosePicker" aria-label="Close food options">✕</button></div>
+                <p class="muted">Choose a variation, quantity, and any kitchen notes.</p>
+                <fieldset class="variation-fieldset"><legend>Variation</legend><div class="variation-grid">
+                    @if (selected.Variations.Count == 0)
+                    {
+                        <button type="button" class="variation-option is-selected" aria-pressed="true">Standard<strong>RM @selected.Price.ToString("0.00")</strong></button>
+                    }
+                    @foreach (var option in selected.Variations.OrderBy(x => x.SortOrder))
+                    {
+                        <button type="button" class="variation-option @(selectedVariationId == option.Id ? "is-selected" : "")" aria-pressed="@(selectedVariationId == option.Id ? "true" : "false")" @onclick="() => selectedVariationId = option.Id">@option.Name<strong>RM @((selected.Price + option.AdditionalPrice).ToString("0.00"))</strong></button>
+                    }
+                </div></fieldset>
+                <label>Quantity<input type="number" min="1" max="99" required @bind="selectedQuantity" /></label>
+                <label>Kitchen notes<textarea maxlength="500" placeholder="For example: no chili, less sugar…" @bind="selectedNotes"></textarea></label>
+                @if (pickerError != null) { <p class="error" role="alert">@pickerError</p> }
+                <div class="picker-footer"><strong>RM @((PickerPrice * selectedQuantity).ToString("0.00"))</strong><button type="submit" disabled="@(selected.Variations.Count > 0 && !selectedVariationId.HasValue)">Add to order</button></div>
+            </form>
+        </section>
+    </div>
 }
 @code {
     [Parameter] public Guid? Id { get; set; }
-    private List<MenuItem>? menu; private List<DiningTable> tables = []; private List<Order> active = [];
-    private readonly List<CartLine> cart = []; private string search = "", category = "", notes = "";
-    private OrderType type; private int tableId; private bool busy; private string? error;
-    private string key = Guid.NewGuid().ToString(); private long version;
+    private enum OrderStep { Type, Table, Food }
+    private OrderStep step;
+    private List<MenuItem>? menu;
+    private List<DiningTable> tables = [];
+    private List<Order> active = [];
+    private readonly List<CartLine> cart = [];
+    private OrderType type = OrderType.Takeaway;
+    private int tableId, categoryId;
+    private Guid? targetOrderId;
+    private string destination = "Take away", search = "", notes = "";
+    private bool busy, initialized;
+    private Guid? loadedId;
+    private string? error;
+    private string key = Guid.NewGuid().ToString();
+    private long version;
+    private MenuItem? selected;
+    private int? selectedVariationId;
+    private int selectedQuantity = 1;
+    private string selectedNotes = "";
+    private string? pickerError;
+    private ElementReference picker;
+    private bool focusPicker;
+    private IEnumerable<MenuItem> FilteredMenu => menu?.Where(m => (categoryId == 0 || m.CategoryId == categoryId) && m.Name.Contains(search, StringComparison.OrdinalIgnoreCase)) ?? [];
+    private decimal PickerPrice => (selected?.Price ?? 0m) + (selected?.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.AdditionalPrice ?? 0m);
     protected override async Task OnParametersSetAsync()
     {
-        try { menu = await Service.Menu(); active = await Service.Active(); tables = (await Service.Tables()).Where(t => !active.Any(o => o.TableId == t.Id)).ToList(); if (Id.HasValue) version = (await Service.Bill(Id.Value)).Version; }
-        catch (Exception) { error = "Could not load ordering data. Reload to retry."; }
+        if (initialized && loadedId == Id) return;
+        initialized = true; loadedId = Id; targetOrderId = Id;
+        cart.Clear(); notes = ""; key = Guid.NewGuid().ToString(); selected = null;
+        step = Id.HasValue ? OrderStep.Food : OrderStep.Type;
+        await Reload();
     }
-    private void Add(MenuItem item) { var line = cart.FirstOrDefault(x => x.Menu.Id == item.Id); if (line == null) cart.Add(new() { Menu = item }); else if (line.Quantity < 99) line.Quantity++; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusPicker && selected != null) { focusPicker = false; await picker.FocusAsync(); }
+    }
+    private async Task Reload()
+    {
+        try
+        {
+            menu = await Service.Menu(); active = await Service.Active(); tables = await Service.Tables();
+            if (targetOrderId.HasValue)
+            {
+                var bill = await Service.Bill(targetOrderId.Value); version = bill.Version; destination = bill.Destination;
+                var current = active.FirstOrDefault(o => o.Id == targetOrderId);
+                if (current == null) throw new BusinessException("This order is no longer active.");
+                type = current.OrderType; tableId = current.TableId ?? 0;
+            }
+            error = null;
+        }
+        catch (BusinessException e) { error = e.Message; }
+        catch { error = "Could not load ordering data. Refresh to retry."; }
+    }
+    private void ChooseType(OrderType value)
+    {
+        type = value; targetOrderId = null; tableId = 0;
+        destination = "Take away"; step = value == OrderType.Takeaway ? OrderStep.Food : OrderStep.Table;
+    }
+    private void ChooseTable(DiningTable table)
+    {
+        type = OrderType.DineIn; tableId = table.Id; destination = $"Table {table.Number}";
+        var existing = active.FirstOrDefault(o => o.TableId == table.Id);
+        targetOrderId = existing?.Id; version = existing?.Version ?? 0;
+        step = OrderStep.Food;
+    }
+    private void Back()
+    {
+        if (Id.HasValue) { Nav.NavigateTo("/order"); return; }
+        selected = null;
+        step = step == OrderStep.Food && type == OrderType.DineIn ? OrderStep.Table : OrderStep.Type;
+    }
+    private void OpenPicker(MenuItem item) { selected = item; selectedVariationId = null; selectedQuantity = 1; selectedNotes = ""; pickerError = null; focusPicker = true; }
+    private void ClosePicker() => selected = null;
+    private void PickerKeyDown(KeyboardEventArgs e) { if (e.Key == "Escape") ClosePicker(); }
+    private void AddToOrder()
+    {
+        if (selected == null) return;
+        if (selectedQuantity is < 1 or > 99 || selectedNotes.Length > 500) { pickerError = "Choose a quantity from 1 to 99 and notes up to 500 characters."; return; }
+        if (selected.Variations.Count > 0 && !selectedVariationId.HasValue) { pickerError = "Choose a variation first."; return; }
+        if (cart.Count >= 100) { pickerError = "Send this batch before adding more items (maximum 100 lines)."; return; }
+        cart.Add(new() { MenuItemId = selected.Id, MenuName = selected.Name, VariationId = selectedVariationId, VariationName = selected.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.Name ?? "Standard", UnitPrice = PickerPrice, Quantity = selectedQuantity, Notes = selectedNotes.Trim() });
+        selected = null;
+    }
     private async Task Submit()
     {
+        if (busy) return;
         busy = true; error = null;
         try
         {
             var user = (await Authentication.GetAuthenticationStateAsync()).User;
             if (!(user.IsInRole("Admin") || user.IsInRole("Waiter"))) throw new BusinessException("Not authorized", 403);
-            var items = cart.Select(x => new ItemInput(x.Menu.Id, x.Quantity, x.Notes)).ToList();
+            if (cart.Any(x => x.Quantity is < 1 or > 99)) throw new BusinessException("Quantities must be from 1 to 99.", 400);
+            var items = cart.Select(x => new ItemInput(x.MenuItemId, x.Quantity, x.Notes, x.VariationId)).ToList();
             Guid id;
-            if (Id.HasValue) id = await Service.Add(Id.Value, new(version, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (targetOrderId.HasValue) id = await Service.Add(targetOrderId.Value, new(version, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             else id = await Service.Create(new(type, type == OrderType.DineIn ? tableId : null, notes, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            cart.Clear(); key = Guid.NewGuid().ToString(); Nav.NavigateTo($"/cashier/{id}");
+            cart.Clear(); key = Guid.NewGuid().ToString(); Nav.NavigateTo($"/cashier/{id}?submitted=true");
         }
         catch (BusinessException e) { error = e.Message; }
         catch { error = "Could not confirm submission. Retry the same request; it will not create duplicate items."; }
         finally { busy = false; }
     }
-    private sealed class CartLine { public MenuItem Menu { get; set; } = null!; public int Quantity { get; set; } = 1; public string Notes { get; set; } = ""; }
+    private static string Destination(Order o) => o.Table == null ? "Take away" : $"Table {o.Table.Number}";
+    private static string ShortNumber(string number) => number.Length > 20 ? number[..20] + "…" : number;
+    private sealed class CartLine
+    {
+        public int MenuItemId { get; init; }
+        public string MenuName { get; init; } = "";
+        public int? VariationId { get; init; }
+        public string VariationName { get; init; } = "";
+        public decimal UnitPrice { get; init; }
+        public int Quantity { get; set; }
+        public string Notes { get; init; } = "";
+    }
 }

@@ -56,4 +56,4 @@ Retention affects only job-generated backups, not preserved rollback files. Revi
 
 ## Business time and money
 
-Stored timestamps are UTC, display is Asia/Kuala_Lumpur, currency is RM. Reports, business-day cutoff and financial adjustment/refund calculations are not implemented. The first-slice bill is a provisional unpaid bill, not a payment receipt. Future reporting must use local date-boundary conversion to UTC, completed payment transactions and immutable item snapshots; never server-local dates or current menu prices.
+Stored timestamps are UTC, display is Asia/Kuala_Lumpur, currency is RM. Reports, business-day cutoff and financial adjustment/refund calculations are not implemented. Open bills are provisional; full-bill checkout records a completed payment and produces a settled receipt. Cash tender/change is separate from collected revenue. Future reporting must use local date-boundary conversion to UTC, completed payment transactions and immutable item snapshots; never server-local dates or current menu prices.

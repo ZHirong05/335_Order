@@ -26,6 +26,26 @@ public sealed class WebTests
         using var client = app.CreateClient(new() { AllowAutoRedirect = false, BaseAddress = new Uri("https://localhost") });
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/orders/active")).StatusCode);
     }
+    [Fact] public async Task MenuVariationsReachKitchenAndCashierPreviews()
+    {
+        using var app = new TestApp(bypass: true);
+        using var client = app.CreateClient();
+        var menu = await client.GetFromJsonAsync<List<MenuView>>("/api/menu");
+        var food = menu!.Single(m => m.Name == "Nasi Lemak");
+        var large = food.Variations.Single(v => v.Name == "Large");
+        Assert.Equal(10.50m, large.Price);
+        var csrf = await client.GetFromJsonAsync<Token>("/api/antiforgery");
+        client.DefaultRequestHeaders.Add("RequestVerificationToken", csrf!.token);
+        var created = await client.PostAsJsonAsync("/api/orders", new CreateOrderInput(OrderType.Takeaway, null, "Variation flow", [new(food.Id, 2, "Less chili", large.Id)], Guid.NewGuid().ToString()));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var bill = await client.GetFromJsonAsync<Bill>(created.Headers.Location!);
+        Assert.Equal(21m, bill!.Total); Assert.Equal("Nasi Lemak (Large)", bill.Items.Single().Name);
+        Assert.Contains("Nasi Lemak (Large)", await client.GetStringAsync("/api/kitchen/tickets"));
+        var preview = await client.GetStringAsync("/cashier");
+        Assert.Contains("Nasi Lemak (Large)", preview); Assert.Contains("Less chili", preview); Assert.Contains("RM 21.00", preview);
+        var orderPage = await client.GetStringAsync("/order");
+        Assert.Contains("Take away", orderPage); Assert.Contains("Dine-in", orderPage);
+    }
     [Fact] public async Task FirstRunSetupRequiresSecretAndClosesAfterAdminCreation()
     {
         using var app = new TestApp(seed: false);
@@ -75,7 +95,34 @@ public sealed class WebTests
         var result = await c.PostAsync("/auth/login", new FormUrlEncodedContent(new Dictionary<string, string> { ["email"] = role + "@demo.local", ["password"] = password, ["__RequestVerificationToken"] = token }));
         Assert.Equal("/dashboard", result.Headers.Location!.OriginalString);
     }
+    [Fact] public async Task OnlyCashierOrAdminCanCheckoutAndTableBecomesAvailable()
+    {
+        using var app = new TestApp();
+        using var waiter = app.CreateClient(new() { AllowAutoRedirect = false });
+        await Login(waiter, "waiter", app.Password);
+        var waiterToken = await waiter.GetFromJsonAsync<Token>("/api/antiforgery");
+        waiter.DefaultRequestHeaders.Add("RequestVerificationToken", waiterToken!.token);
+        var request = new CreateOrderInput(OrderType.DineIn, 2, "Checkout integration", [new(1, 1)], Guid.NewGuid().ToString());
+        var created = await waiter.PostAsJsonAsync("/api/orders", request); Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var bill = (await waiter.GetFromJsonAsync<Bill>(created.Headers.Location!))!;
+        var payment = new CheckoutInput(bill.Version, bill.Balance, PaymentMethod.Cash, 20m, "Test counter", Guid.NewGuid().ToString());
+        Assert.Equal(HttpStatusCode.Forbidden, (await waiter.PostAsJsonAsync($"/api/orders/{bill.OrderId}/checkout", payment)).StatusCode);
+        using var cashier = app.CreateClient(new() { AllowAutoRedirect = false }); await Login(cashier, "cashier", app.Password);
+        Assert.Equal(HttpStatusCode.BadRequest, (await cashier.PostAsJsonAsync($"/api/orders/{bill.OrderId}/checkout", payment)).StatusCode);
+        var cashierToken = await cashier.GetFromJsonAsync<Token>("/api/antiforgery");
+        cashier.DefaultRequestHeaders.Add("RequestVerificationToken", cashierToken!.token);
+        Assert.Equal(HttpStatusCode.OK, (await cashier.PostAsJsonAsync($"/api/orders/{bill.OrderId}/checkout", payment)).StatusCode);
+        var settled = (await cashier.GetFromJsonAsync<Bill>(created.Headers.Location!))!;
+        Assert.Equal(OrderStatus.Closed, settled.Status); Assert.Equal(0m, settled.Balance); Assert.Single(settled.Payments!);
+        var tables = await cashier.GetFromJsonAsync<List<TableView>>("/api/tables");
+        Assert.Equal("Available", tables!.Single(t => t.Id == 2).Status);
+        Assert.Contains("CLOSED", await cashier.GetStringAsync($"/cashier/{bill.OrderId}"));
+        Assert.Equal(HttpStatusCode.Created, (await waiter.PostAsJsonAsync("/api/orders", request with { IdempotencyKey = Guid.NewGuid().ToString() })).StatusCode);
+    }
     private sealed record Token(string token);
+    private sealed record TableView(int Id, string Status);
+    private sealed record MenuView(int Id, string Name, decimal Price, List<VariationView> Variations);
+    private sealed record VariationView(int Id, string Name, decimal AdditionalPrice, decimal Price);
     private sealed class TestApp(bool seed = true, bool bypass = false, string environment = "Development") : WebApplicationFactory<Program>
     {
         private readonly string folder = Path.Combine(Path.GetTempPath(), "335-web-" + Guid.NewGuid());

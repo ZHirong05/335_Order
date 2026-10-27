@@ -21,6 +21,7 @@ else
         <section class="card @(t.Status == KitchenStatus.Cancelled ? "cancelled" : "")">
             <h2>@(t.Order.Table == null ? "TAKEAWAY" : $"TABLE {t.Order.Table.Number}") · @t.Status.ToString().ToUpperInvariant()</h2>
             <p>@t.Order.OrderNumber</p>
+            @if (t.Order.Status == OrderStatus.Closed) { <p class="settled-label">PAID / CHECKED OUT · Continue preparing this ticket</p> }
             <p>@Math.Max(0, (int)(DateTime.UtcNow - t.CreatedAtUtc).TotalMinutes) minutes elapsed</p>
             @foreach (var i in t.Items)
             {
