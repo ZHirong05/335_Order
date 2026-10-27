@@ -19,6 +19,7 @@ public sealed class PosDb(DbContextOptions<PosDb> options) : IdentityDbContext<A
     public DbSet<OrderEvent> Events => Set<OrderEvent>();
     public DbSet<RequestRecord> Requests => Set<RequestRecord>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);
@@ -33,6 +34,11 @@ public sealed class PosDb(DbContextOptions<PosDb> options) : IdentityDbContext<A
         b.Entity<Payment>().Property(x => x.CashTendered).HasConversion(money);
         b.Entity<Payment>().Property(x => x.Change).HasConversion(money);
         b.Entity<Payment>().HasIndex(x => x.IdempotencyKey).IsUnique();
+        b.Entity<PaymentAllocation>().Property(x => x.Amount).HasConversion(money);
+        b.Entity<PaymentAllocation>().HasIndex(x => new { x.PaymentId, x.OrderItemId }).IsUnique();
+        b.Entity<Payment>().HasMany(x => x.Allocations).WithOne().HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<PaymentAllocation>().HasOne(x => x.OrderItem).WithMany().HasForeignKey(x => x.OrderItemId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<PaymentAllocation>().ToTable(t => t.HasCheckConstraint("CK_PaymentAllocation", "Quantity > 0 AND Amount >= 0"));
         b.Entity<Payment>().HasOne<Order>().WithMany().HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<Payment>().HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ReceivedByUserId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<Payment>().ToTable(t => t.HasCheckConstraint("CK_Payment", "Amount > 0 AND CashTendered >= Amount AND \"Change\" = CashTendered - Amount AND Method >= 0 AND Method <= 4 AND (Method = 0 OR \"Change\" = 0)"));
@@ -40,6 +46,8 @@ public sealed class PosDb(DbContextOptions<PosDb> options) : IdentityDbContext<A
         b.Entity<DiningTable>().Property(x => x.Version).IsConcurrencyToken();
         b.Entity<Order>().Property(x => x.Version).IsConcurrencyToken();
         b.Entity<Order>().HasIndex(x => x.OrderNumber).IsUnique();
+        b.Entity<Order>().Ignore(x => x.DisplayNumber);
+        b.Entity<Order>().HasIndex(x => new { x.BusinessDate, x.DailyNumber }).IsUnique().HasFilter("DailyNumber > 0");
         b.Entity<Order>().HasIndex(x => x.TableId).IsUnique().HasFilter("TableId IS NOT NULL AND Status <> 2");
         b.Entity<Order>().HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<Order>().HasOne(x => x.Table).WithMany().HasForeignKey(x => x.TableId).OnDelete(DeleteBehavior.Restrict);

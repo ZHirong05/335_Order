@@ -9,6 +9,7 @@
 <PageTitle>Kitchen · 335 Order</PageTitle>
 <h1>Kitchen display</h1>
 <button @onclick="EnableSound">Enable sound</button><span> @soundStatus</span>
+<div class="kitchen-status-legend" aria-label="Kitchen item colors"><span class="kitchen-added">New</span><span class="kitchen-preparing">Preparing</span><span class="kitchen-ready">Ready</span><span class="kitchen-cancelled">Cancelled</span></div>
 <p><a href="/dashboard">Dashboard</a> · Database reconciliation every 5 seconds · Last sync: @lastSync</p>
 @if (error != null) { <p class="error" role="alert">@error</p> }
 @if (tickets == null) { <p>Loading kitchen tickets…</p> }
@@ -18,17 +19,20 @@ else
     <div class="menu-grid">
     @foreach (var t in tickets)
     {
-        <section class="card @(t.Status == KitchenStatus.Cancelled ? "cancelled" : "")">
+        <section class="card kitchen-card @(t.Status == KitchenStatus.Cancelled ? "cancelled" : t.Status == KitchenStatus.Ready ? "kitchen-card-ready" : "")">
             <h2>@(t.Order.Table == null ? "TAKEAWAY" : $"TABLE {t.Order.Table.Number}") · @t.Status.ToString().ToUpperInvariant()</h2>
-            <p>@t.Order.OrderNumber</p>
+            <p>@t.Order.DisplayNumber · @t.Order.BusinessDate</p>
             @if (t.Order.Status == OrderStatus.Closed) { <p class="settled-label">PAID / CHECKED OUT · Continue preparing this ticket</p> }
             <p>@Math.Max(0, (int)(DateTime.UtcNow - t.CreatedAtUtc).TotalMinutes) minutes elapsed</p>
             @foreach (var i in t.Items)
             {
-                <p><strong>@(i.Quantity - i.OrderItem.CancelledQuantity) × @i.OrderItem.ItemNameSnapshot</strong> · @i.NotesSnapshot</p>
-                @if (i.OrderItem.CancelledQuantity > 0) { <p class="error">CANCELLED: @i.OrderItem.CancelledQuantity of @i.Quantity originally sent. Check before cooking.</p> }
+                @if (i.Quantity > i.OrderItem.CancelledQuantity) { <p class="@ItemColor(i.Status)"><strong>@(i.Quantity - i.OrderItem.CancelledQuantity) &times; @i.OrderItem.ItemNameSnapshot</strong>@if (!string.IsNullOrWhiteSpace(i.NotesSnapshot)) { <span> &middot; @i.NotesSnapshot</span> }</p> }
+                @if (i.OrderItem.CancelledQuantity > 0)
+                {
+                    <p class="kitchen-cancelled"><del>@i.OrderItem.CancelledQuantity &times; @i.OrderItem.ItemNameSnapshot</del><br /><span>CANCELLED</span>@if (!string.IsNullOrWhiteSpace(i.CancellationReason)) { <span> &middot; @i.CancellationReason</span> }</p>
+                }
             }
-            @if (t.Order.Notes.Length > 0) { <p>Order notes: @t.Order.Notes</p> }
+            @if (t.Order.Notes.Length > 0) { <p>Order notes: <strong>@t.Order.Notes</strong></p> }
             @if (t.Status == KitchenStatus.New) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Preparing)">Acknowledge / start preparing</button> }
             @if (t.Status == KitchenStatus.Preparing) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Ready)">Mark ready</button> }
         </section>
@@ -36,6 +40,7 @@ else
     </div>
 }
 @code {
+    private static string ItemColor(KitchenStatus status) => status switch { KitchenStatus.Preparing => "kitchen-preparing", KitchenStatus.Ready => "kitchen-ready", KitchenStatus.Cancelled => "kitchen-cancelled", _ => "kitchen-added" };
     private List<KitchenTicket>? tickets; private string? error; private string lastSync = "waiting"; private bool busy;
     private readonly CancellationTokenSource stop = new(); private Task? reconcile;
     private string soundStatus = "Sound is off. Keep this page visible.";

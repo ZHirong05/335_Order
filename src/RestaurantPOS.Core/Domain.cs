@@ -16,6 +16,16 @@ public sealed class Payment
     public string ReceivedByUserId { get; set; } = "";
     public string Reference { get; set; } = "";
     public string IdempotencyKey { get; set; } = "";
+    public List<PaymentAllocation> Allocations { get; set; } = [];
+}
+public sealed class PaymentAllocation
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PaymentId { get; set; }
+    public Guid OrderItemId { get; set; }
+    public OrderItem OrderItem { get; set; } = null!;
+    public int Quantity { get; set; }
+    public decimal Amount { get; set; }
 }
 public sealed class DiningTable
 {
@@ -57,6 +67,9 @@ public sealed class Order
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string OrderNumber { get; set; } = "";
+    public string BusinessDate { get; set; } = "";
+    public int DailyNumber { get; set; }
+    public string DisplayNumber => $"#{DailyNumber:0000}";
     public OrderType OrderType { get; set; }
     public int? TableId { get; set; }
     public DiningTable? Table { get; set; }
@@ -101,6 +114,7 @@ public sealed class KitchenTicketItem
     public int Quantity { get; set; }
     public KitchenStatus Status { get; set; }
     public string NotesSnapshot { get; set; } = "";
+    public string CancellationReason { get; set; } = "";
 }
 public sealed class OrderEvent
 {
@@ -121,13 +135,22 @@ public sealed class RequestRecord
 public record ItemInput(int MenuItemId, int Quantity, string Notes = "", int? VariationId = null);
 public record CreateOrderInput(OrderType OrderType, int? TableId, string Notes, List<ItemInput> Items, string IdempotencyKey);
 public record AddItemsInput(long Version, List<ItemInput> Items, string IdempotencyKey);
-public record CancelInput(long Version, int Quantity, string Reason);
+public record CancelInput(long Version, int Quantity, string Reason = "");
+public record CancelLineInput(Guid ItemId, int Quantity);
+public record CancelItemsInput(long Version, List<CancelLineInput> Items, string Reason = "", string IdempotencyKey = "");
+public record HandoffInput(long Version, string IdempotencyKey);
 public record TicketStatusInput(long Version, KitchenStatus Status);
 public record CheckoutInput(long Version, decimal Amount, PaymentMethod Method, decimal? CashTendered, string Reference, string IdempotencyKey);
-public record PaymentView(Guid Id, decimal Amount, PaymentMethod Method, decimal CashTendered, decimal Change, string Reference, DateTime ReceivedAtUtc);
+public record PaymentSelection(Guid OrderItemId, int Quantity);
+public record SplitPaymentInput(long Version, List<PaymentSelection> Items, decimal Amount, PaymentMethod Method, decimal? CashTendered, string Reference, string IdempotencyKey);
+public record PaymentAllocationView(Guid OrderItemId, string Name, int Quantity, decimal Amount);
+public record PaymentView(Guid Id, decimal Amount, PaymentMethod Method, decimal CashTendered, decimal Change, string Reference, DateTime ReceivedAtUtc, IReadOnlyList<PaymentAllocationView>? Items = null);
 public record BusinessEvent(Guid EventId, string EventType, Guid OrderId, long Version);
-public record BillLine(Guid Id, string Name, int Quantity, decimal UnitPrice, string Notes);
-public record Bill(Guid OrderId, string OrderNumber, string Destination, long Version, IReadOnlyList<BillLine> Items, OrderStatus Status = OrderStatus.Open, IReadOnlyList<PaymentView>? Payments = null)
+public record BillLine(Guid Id, string Name, int Quantity, decimal UnitPrice, string Notes, int PaidQuantity = 0)
+{
+    public int RemainingQuantity => Quantity - PaidQuantity;
+}
+public record Bill(Guid OrderId, string OrderNumber, string Destination, long Version, IReadOnlyList<BillLine> Items, OrderStatus Status = OrderStatus.Open, IReadOnlyList<PaymentView>? Payments = null, string DisplayNumber = "", string BusinessDate = "")
 {
     public decimal Total => Items.Sum(x => x.Quantity * x.UnitPrice);
     public decimal Paid => Payments?.Sum(x => x.Amount) ?? 0m;

@@ -1,7 +1,9 @@
-﻿@page "/order"
+@page "/order"
 @page "/order/{Id:guid}"
 @attribute [Authorize(Roles = "Admin,Waiter")]
 @rendermode InteractiveServer
+@implements IAsyncDisposable
+@inject BusinessNotifications Notifications
 @inject OrderService Service
 @inject AuthenticationStateProvider Authentication
 @inject NavigationManager Nav
@@ -17,10 +19,11 @@
         <ol class="order-steps" aria-label="Order progress">
             <li class="@(step == OrderStep.Type ? "current-step" : "")"><span class="step-label-full">1. Order type</span><span class="step-label-short">1. Type</span></li>
             @if (type == OrderType.DineIn && step != OrderStep.Type) { <li class="@(step == OrderStep.Table ? "current-step" : "")"><span class="step-label-full">2. Select table</span><span class="step-label-short">2. Table</span></li> }
-            <li class="@(step == OrderStep.Food ? "current-step" : "")"><span class="step-label-full">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). Select food</span><span class="step-label-short">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). Food</span></li>
+            <li class="@(step is OrderStep.Food or OrderStep.Actions or OrderStep.Cancel ? "current-step" : "")"><span class="step-label-full">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). @(targetOrderId.HasValue && step != OrderStep.Food ? "Manage order" : "Select food")</span><span class="step-label-short">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). @(targetOrderId.HasValue && step != OrderStep.Food ? "Order" : "Food")</span></li>
         </ol>
         @if (step != OrderStep.Type) { <button class="secondary-button order-back" disabled="@busy" @onclick="Back">← Back</button> }
     </div>
+    @if (success != null) { <p class="notice" role="status">@success</p> }
     @if (error != null) { <div class="notice error" role="alert">@error <button class="secondary-button" disabled="@busy" @onclick="Reload">Refresh data</button></div> }
     @if (menu == null) { <p role="status">Loading menu and tables…</p> }
     else if (step == OrderStep.Type)
@@ -36,7 +39,12 @@
         @if (active.Count > 0)
         {
             <div class="section-heading"><h2>Continue an order</h2><span>Add items to an existing order</span></div>
-            <div class="continue-grid">@foreach (var o in active) { <a class="continue-order" href="@($"/order/{o.Id}")"><strong>@Destination(o)</strong><span>@ShortNumber(o.OrderNumber)</span><span aria-hidden="true">→</span></a> }</div>
+            <div class="continue-grid">
+                @foreach (var o in active)
+                {
+                    <OrderPreviewCard Order="o" Href="@($"/order/{o.Id}")" />
+                }
+            </div>
         }
     }
     else if (step == OrderStep.Table)
@@ -55,9 +63,42 @@
             }
         </div>
     }
+    else if (step == OrderStep.Actions && existingBill != null)
+    {
+        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>@(existingBill.Status == OrderStatus.AwaitingPayment ? "Awaiting cashier" : "Continue an order")</span></div>
+        @if (existingBill.Status == OrderStatus.AwaitingPayment)
+        {
+            <div class="notice"><span>@((existingBill.Payments?.Count ?? 0) == 0 ? "This order has been sent to cashier. Undo checkout to edit it." : "A payment has been recorded. Complete the remaining balance at cashier.")</span>@if ((existingBill.Payments?.Count ?? 0) == 0) { <button disabled="@busy" @onclick="UndoHandoff">Undo checkout</button> }<a href="@($"/cashier/{targetOrderId}")">View bill &rarr;</a></div>
+        }
+        <div class="order-action-grid">
+            <button class="selection-card" disabled="@(busy || existingBill.Status != OrderStatus.Open)" @onclick="() => step = OrderStep.Food"><span class="choice-symbol" aria-hidden="true">+</span><strong>Add Item</strong><span>Choose food and add another kitchen ticket.</span></button>
+            <button class="selection-card" disabled="@(busy || existingBill.Status != OrderStatus.Open)" @onclick="() => step = OrderStep.Cancel"><span class="choice-symbol" aria-hidden="true">-</span><strong>Cancel Item</strong><span>Select items and quantities to cancel.</span></button>
+        </div>
+        <section class="current-order-panel"><div class="section-heading"><h2>Your order</h2><span>@existingBill.Items.Sum(i => i.Quantity) items</span></div>
+            @foreach (var item in existingBill.Items)
+            {
+                <div class="saved-order-line @(item.Quantity == 0 ? "cancelled-line" : "")"><strong>@item.Quantity &times; @item.Name</strong>@if (item.Quantity == 0) { <span>Cancelled</span> }@if (item.Notes.Length > 0) { <span>@item.Notes</span> }</div>
+            }
+        </section>
+        @if (existingBill.Status == OrderStatus.Open) { <button class="checkout-order-button" disabled="@busy" @onclick="CheckoutHandoff">@(busy ? "Sending to cashier..." : "Checkout \u2192")</button> }
+    }
+    else if (step == OrderStep.Cancel && existingBill != null)
+    {
+        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>Cancel Item</span></div>
+        <p class="muted">Select the items to cancel. Quantities cannot exceed what remains in the order.</p>
+        @foreach (var item in existingBill.Items.Where(i => i.Quantity > 0))
+        {
+            <div class="cancel-selection-row">
+                <label class="cancel-checkbox"><input type="checkbox" disabled="@busy" checked="@cancelSelections.ContainsKey(item.Id)" @onchange="e => SelectCancellation(item.Id, e.Value is true)" /><span><strong>@item.Name</strong><small>@item.Quantity remaining &middot; @item.Notes</small></span></label>
+                <label>Cancel quantity<input type="number" min="1" max="@item.Quantity" disabled="@(busy || !cancelSelections.ContainsKey(item.Id))" value="@cancelSelections.GetValueOrDefault(item.Id, 1)" @onchange="e => ChangeCancelQuantity(item.Id, item.Quantity, e.Value?.ToString())" /></label>
+            </div>
+        }
+        <label>Cancellation reason (optional)<textarea maxlength="500" disabled="@busy" @bind="cancelReason" @bind:event="oninput" placeholder="Add a note for the kitchen if needed"></textarea></label>
+        <button disabled="@(busy || cancelSelections.Count == 0)" @onclick="SubmitCancellations">@(busy ? "Notifying kitchen..." : "Cancel selected items & notify kitchen")</button>
+    }
     else
     {
-        <div class="order-context"><strong>@destination</strong><span>@(targetOrderId.HasValue ? "Adding items to an existing order" : "New order")</span></div>
+        <div class="order-context"><strong>@destination @existingBill?.DisplayNumber</strong><span>@(targetOrderId.HasValue ? "Adding items to an existing order" : "New order")</span></div>
         <div class="ordering-layout">
             <section aria-label="Menu">
                 <label class="menu-search">Search food or drinks<input type="search" placeholder="Search the menu…" @bind="search" @bind:event="oninput" /></label>
@@ -132,7 +173,7 @@
 }
 @code {
     [Parameter] public Guid? Id { get; set; }
-    private enum OrderStep { Type, Table, Food }
+    private enum OrderStep { Type, Table, Food, Actions, Cancel }
     private OrderStep step;
     private List<MenuItem>? menu;
     private List<DiningTable> tables = [];
@@ -144,7 +185,10 @@
     private string destination = "Take away", search = "", notes = "";
     private bool busy, initialized;
     private Guid? loadedId;
-    private string? error;
+    private string? error, success;
+    private Bill? existingBill;
+    private readonly Dictionary<Guid, int> cancelSelections = [];
+    private string cancelReason = "", cancelKey = Guid.NewGuid().ToString(), handoffKey = Guid.NewGuid().ToString();
     private string key = Guid.NewGuid().ToString();
     private long version;
     private MenuItem? selected;
@@ -154,6 +198,28 @@
     private string? pickerError;
     private ElementReference picker;
     private bool focusPicker;
+    private readonly CancellationTokenSource reconciliationStop = new();
+    private Task? reconciliation;
+    private bool disposed;
+    protected override void OnInitialized() { Notifications.Changed += OrderChanged; reconciliation = PollOrders(); }
+    private void OrderChanged(BusinessEvent notification) { if (!disposed) _ = InvokeAsync(ReconcileOrders); }
+    private async Task ReconcileOrders()
+    {
+        if (disposed || busy || selected != null || step is OrderStep.Food or OrderStep.Cancel) return;
+        await Reload();
+        if (targetOrderId.HasValue && existingBill?.Status == OrderStatus.Closed)
+        {
+            ClearDraft(); targetOrderId = null; existingBill = null; step = OrderStep.Type; error = null;
+            if (Id.HasValue) Nav.NavigateTo("/order");
+        }
+        StateHasChanged();
+    }
+    private async Task PollOrders()
+    {
+        try { using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5)); while (await timer.WaitForNextTickAsync(reconciliationStop.Token)) await InvokeAsync(ReconcileOrders); }
+        catch (OperationCanceledException) { }
+    }
+    public async ValueTask DisposeAsync() { disposed = true; Notifications.Changed -= OrderChanged; reconciliationStop.Cancel(); if (reconciliation != null) await reconciliation; reconciliationStop.Dispose(); }
     private IEnumerable<MenuItem> FilteredMenu => menu?.Where(m => (categoryId == 0 || m.CategoryId == categoryId) && m.Name.Contains(search, StringComparison.OrdinalIgnoreCase)) ?? [];
     private decimal PickerPrice => (selected?.Price ?? 0m) + (selected?.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.AdditionalPrice ?? 0m);
     protected override async Task OnParametersSetAsync()
@@ -161,7 +227,7 @@
         if (initialized && loadedId == Id) return;
         initialized = true; loadedId = Id; targetOrderId = Id;
         cart.Clear(); notes = ""; key = Guid.NewGuid().ToString(); selected = null;
-        step = Id.HasValue ? OrderStep.Food : OrderStep.Type;
+        step = Id.HasValue ? OrderStep.Actions : OrderStep.Type;
         await Reload();
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -175,7 +241,7 @@
             menu = await Service.Menu(); active = await Service.Active(); tables = await Service.Tables();
             if (targetOrderId.HasValue)
             {
-                var bill = await Service.Bill(targetOrderId.Value); version = bill.Version; destination = bill.Destination;
+                existingBill = await Service.Bill(targetOrderId.Value); version = existingBill.Version; destination = existingBill.Destination;
                 var current = active.FirstOrDefault(o => o.Id == targetOrderId);
                 if (current == null) throw new BusinessException("This order is no longer active.");
                 type = current.OrderType; tableId = current.TableId ?? 0;
@@ -187,21 +253,77 @@
     }
     private void ChooseType(OrderType value)
     {
-        type = value; targetOrderId = null; tableId = 0;
+        type = value; targetOrderId = null; existingBill = null; tableId = 0; success = null;
         destination = "Take away"; step = value == OrderType.Takeaway ? OrderStep.Food : OrderStep.Table;
     }
-    private void ChooseTable(DiningTable table)
+    private async Task ChooseTable(DiningTable table)
     {
         type = OrderType.DineIn; tableId = table.Id; destination = $"Table {table.Number}";
         var existing = active.FirstOrDefault(o => o.TableId == table.Id);
-        targetOrderId = existing?.Id; version = existing?.Version ?? 0;
-        step = OrderStep.Food;
+        targetOrderId = existing?.Id; version = existing?.Version ?? 0; success = null;
+        step = existing == null ? OrderStep.Food : OrderStep.Actions;
+        if (existing != null) await Reload();
     }
-    private void Back()
+    private void ClearDraft()
     {
-        if (Id.HasValue) { Nav.NavigateTo("/order"); return; }
-        selected = null;
+        cart.Clear(); notes = ""; selected = null; key = Guid.NewGuid().ToString();
+        search = ""; categoryId = 0;
+        cancelSelections.Clear(); cancelReason = ""; cancelKey = Guid.NewGuid().ToString();
+    }
+    private async Task Back()
+    {
+        ClearDraft(); error = null; success = null;
+        if (targetOrderId.HasValue && step is OrderStep.Food or OrderStep.Cancel) { step = OrderStep.Actions; await Reload(); return; }
+        if (targetOrderId.HasValue || Id.HasValue)
+        {
+            targetOrderId = null; existingBill = null; step = OrderStep.Type;
+            if (Id.HasValue) Nav.NavigateTo("/order"); else await Reload();
+            return;
+        }
         step = step == OrderStep.Food && type == OrderType.DineIn ? OrderStep.Table : OrderStep.Type;
+    }
+    private void SelectCancellation(Guid itemId, bool selected) { if (selected) cancelSelections[itemId] = 1; else cancelSelections.Remove(itemId); }
+    private void ChangeCancelQuantity(Guid itemId, int maximum, string? value)
+    {
+        if (int.TryParse(value, out var quantity)) cancelSelections[itemId] = Math.Clamp(quantity, 1, maximum);
+        else cancelSelections.Remove(itemId);
+    }
+    private async Task<string> WaiterActor()
+    {
+        var user = (await Authentication.GetAuthenticationStateAsync()).User;
+        if (!(user.IsInRole("Admin") || user.IsInRole("Waiter"))) throw new BusinessException("Not authorized", 403);
+        return user.FindFirstValue(ClaimTypes.NameIdentifier)!;
+    }
+    private async Task SubmitCancellations()
+    {
+        if (busy || existingBill == null || !targetOrderId.HasValue) return;
+        busy = true; error = null;
+        try
+        {
+            await Service.CancelItems(targetOrderId.Value, new(existingBill.Version, cancelSelections.Select(x => new CancelLineInput(x.Key, x.Value)).ToList(), cancelReason, cancelKey), await WaiterActor());
+            ClearDraft(); await Reload(); step = OrderStep.Actions; success = "Cancellation sent to the kitchen.";
+        }
+        catch (BusinessException ex) { error = ex.Message; }
+        catch { error = "Could not confirm cancellation. Retry the same selection or refresh to reconcile."; }
+        finally { busy = false; }
+    }
+    private async Task CheckoutHandoff()
+    {
+        if (busy || existingBill == null || !targetOrderId.HasValue) return;
+        busy = true; error = null;
+        try { await Service.RequestCheckout(targetOrderId.Value, new(existingBill.Version, handoffKey), await WaiterActor()); Nav.NavigateTo($"/cashier/{targetOrderId}"); }
+        catch (BusinessException ex) { error = ex.Message; }
+        catch { error = "Could not confirm checkout. Refresh the order before retrying."; }
+        finally { busy = false; }
+    }
+    private async Task UndoHandoff()
+    {
+        if (busy || existingBill == null || !targetOrderId.HasValue) return;
+        busy = true; error = null;
+        try { await Service.UndoCheckout(targetOrderId.Value, new(existingBill.Version, Guid.NewGuid().ToString()), await WaiterActor()); await Reload(); handoffKey = Guid.NewGuid().ToString(); success = "Checkout undone. You can edit the order again."; }
+        catch (BusinessException ex) { error = ex.Message; }
+        catch { error = "Could not undo checkout. Refresh to check the order status."; }
+        finally { busy = false; }
     }
     private void OpenPicker(MenuItem item) { selected = item; selectedVariationId = null; selectedQuantity = 1; selectedNotes = ""; pickerError = null; focusPicker = true; }
     private void ClosePicker() => selected = null;
@@ -228,13 +350,15 @@
             Guid id;
             if (targetOrderId.HasValue) id = await Service.Add(targetOrderId.Value, new(version, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             else id = await Service.Create(new(type, type == OrderType.DineIn ? tableId : null, notes, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            cart.Clear(); key = Guid.NewGuid().ToString(); Nav.NavigateTo($"/cashier/{id}?submitted=true");
+            ClearDraft(); targetOrderId = null; existingBill = null; step = OrderStep.Type;
+            await Reload();
+            success = $"Order {active.FirstOrDefault(o => o.Id == id)?.DisplayNumber} sent to the kitchen.";
+            if (Id.HasValue) Nav.NavigateTo("/order");
         }
         catch (BusinessException e) { error = e.Message; }
         catch { error = "Could not confirm submission. Retry the same request; it will not create duplicate items."; }
         finally { busy = false; }
     }
-    private static string Destination(Order o) => o.Table == null ? "Take away" : $"Table {o.Table.Number}";
     private static string ShortNumber(string number) => number.Length > 20 ? number[..20] + "…" : number;
     private sealed class CartLine
     {
