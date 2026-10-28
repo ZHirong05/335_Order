@@ -218,7 +218,7 @@ public sealed class OrderingTests : IAsyncLifetime
         var id = await service.Create(Request(), "waiter");
         var paymentVersion = await QueueCheckout(id);
         await Assert.ThrowsAsync<BusinessException>(() => service.Checkout(id, new(paymentVersion, decimal.Parse(amount, System.Globalization.CultureInfo.InvariantCulture), method, decimal.Parse(tendered, System.Globalization.CultureInfo.InvariantCulture), "", "invalid-checkout"), "waiter"));
-        var bill = await service.Bill(id); Assert.Equal(OrderStatus.AwaitingPayment, bill.Status); Assert.Equal(17m, bill.Balance); Assert.Equal(paymentVersion, bill.Version); Assert.Empty(bill.Payments!);
+        var bill = await service.Bill(id); Assert.Equal(OrderStatus.Open, bill.Status); Assert.Equal(17m, bill.Balance); Assert.Equal(paymentVersion, bill.Version); Assert.Empty(bill.Payments!);
         Assert.DoesNotContain(events.Items, e => e.EventType is "PaymentRecorded" or "OrderClosed");
     }
     [Fact] public async Task ConcurrentCheckoutsOnlyRecordOnePayment()
@@ -236,7 +236,7 @@ public sealed class OrderingTests : IAsyncLifetime
         var paymentVersion = await QueueCheckout(id);
         await Assert.ThrowsAsync<BusinessException>(() => service.Checkout(id, new(1, 17m, PaymentMethod.Cash, 20m, "", "old-bill-checkout"), "waiter"));
         await Assert.ThrowsAsync<BusinessException>(() => service.Checkout(id, new(paymentVersion, 17m, PaymentMethod.Cash, 20m, "", "underpaid-checkout"), "waiter"));
-        var bill = await service.Bill(id); Assert.Equal(OrderStatus.AwaitingPayment, bill.Status); Assert.Equal(25.50m, bill.Balance); Assert.Empty(bill.Payments!);
+        var bill = await service.Bill(id); Assert.Equal(OrderStatus.Open, bill.Status); Assert.Equal(25.50m, bill.Balance); Assert.Empty(bill.Payments!);
     }
     [Fact] public async Task CheckoutRetainsUnfinishedKitchenWork()
     {
@@ -256,12 +256,7 @@ public sealed class OrderingTests : IAsyncLifetime
         var bill = await service.Bill(id); Assert.Equal(OrderStatus.Closed, bill.Status); Assert.Empty(bill.Payments!); Assert.Equal(0m, bill.Paid);
         await service.Create(Request("table-reused", true), "waiter");
     }
-    private async Task<long> QueueCheckout(Guid id)
-    {
-        var bill = await service.Bill(id);
-        await service.RequestCheckout(id, new(bill.Version, Guid.NewGuid().ToString()), "waiter");
-        return (await service.Bill(id)).Version;
-    }
+    private async Task<long> QueueCheckout(Guid id) => (await service.Bill(id)).Version;
     [Fact] public async Task DailyNumbersResetAtMalaysiaMidnightAndKeepInternalReferences()
     {
         var time = new TestClock(DateTimeOffset.Parse("2026-10-26T15:59:00Z"));
@@ -286,25 +281,18 @@ public sealed class OrderingTests : IAsyncLifetime
         Assert.Equal(6, ids.Distinct().Count());
         Assert.Equal(Enumerable.Range(1, 6), await db.Orders.OrderBy(o => o.DailyNumber).Select(o => o.DailyNumber).ToListAsync());
     }
-    [Fact] public async Task CheckoutHandoffCanBeUndoneUntilPaymentIsRecorded()
+    [Fact] public async Task DirectPaymentAllowsEditingBeforePaymentAndLocksAfterPartialPayment()
     {
         var id = await service.Create(Request(dineIn: true), "waiter");
-        var request = new HandoffInput(1, "handoff-request");
-        await service.RequestCheckout(id, request, "waiter"); await service.RequestCheckout(id, request, "waiter");
-        var bill = await service.Bill(id); Assert.Equal(OrderStatus.AwaitingPayment, bill.Status); Assert.Empty(bill.Payments!);
-        await Assert.ThrowsAsync<BusinessException>(() => service.Create(Request("occupied-during-handoff", true), "waiter"));
-        await Assert.ThrowsAsync<BusinessException>(() => service.Add(id, new(bill.Version, [new(1, 1)], "locked-addition"), "waiter"));
-        await Assert.ThrowsAsync<BusinessException>(() => service.Cancel(id, bill.Items.Single().Id, new(bill.Version, 1, "Wait"), "waiter"));
-        await service.UndoCheckout(id, new(bill.Version, "handoff-undo"), "waiter");
-        bill = await service.Bill(id); Assert.Equal(OrderStatus.Open, bill.Status);
-        await service.Add(id, new(bill.Version, [new(1, 1)], "after-undo-add"), "waiter");
-        var editableVersion = (await service.Bill(id)).Version;
-        await Assert.ThrowsAsync<BusinessException>(() => service.Checkout(id, new(editableVersion, 25.50m, PaymentMethod.Cash, 30m, "", "not-handed-off"), "waiter"));
-        var version = await QueueCheckout(id);
-        await service.Checkout(id, new(version, 25.50m, PaymentMethod.Cash, 30m, "", "final-payment"), "waiter");
+        var bill = await service.Bill(id);
+        await service.Add(id, new(bill.Version, [new(1, 1)], "edit-before-payment"), "waiter");
+        bill = await service.Bill(id); var item = bill.Items.First();
+        await service.SplitPayment(id, new(bill.Version, [new(item.Id, 1)], 8.50m, PaymentMethod.QR, null, "", "direct-partial"), "waiter");
         bill = await service.Bill(id);
-        await Assert.ThrowsAsync<BusinessException>(() => service.UndoCheckout(id, new(bill.Version, "undo-paid-order"), "waiter"));
-        Assert.Single(bill.Payments!); Assert.Equal(0m, bill.Balance);
+        await Assert.ThrowsAsync<BusinessException>(() => service.Add(id, new(bill.Version, [new(1, 1)], "edit-paid"), "waiter"));
+        await Assert.ThrowsAsync<BusinessException>(() => service.Cancel(id, item.Id, new(bill.Version, 1), "waiter"));
+        await service.Checkout(id, new(bill.Version, bill.Balance, PaymentMethod.QR, null, "", "direct-final"), "waiter");
+        Assert.Equal(OrderStatus.Closed, (await service.Bill(id)).Status);
     }
     [Fact] public async Task BatchCancellationIsAtomicQuantityBoundedAndIdempotent()
     {
@@ -333,7 +321,6 @@ public sealed class OrderingTests : IAsyncLifetime
         Assert.Equal(2, bill.Items.Single().Quantity); Assert.Equal(1, bill.Items.Single().RemainingQuantity);
         Assert.Equal(1.50m, Assert.Single(bill.Payments!).Change);
         await Assert.ThrowsAsync<BusinessException>(() => service.Create(Request("still-occupied", true), "waiter"));
-        await Assert.ThrowsAsync<BusinessException>(() => service.UndoCheckout(id, new(bill.Version, "undo-partial"), "waiter"));
         await restarted.SplitPayment(id, new(bill.Version, [new(item.Id, 1)], 8.50m, PaymentMethod.QR, null, "person two", "split-last"), "waiter");
         bill = await restarted.Bill(id);
         Assert.Equal(OrderStatus.Closed, bill.Status); Assert.Equal(17m, bill.Total); Assert.Equal(0m, bill.Balance);
@@ -390,7 +377,7 @@ public sealed class OrderingTests : IAsyncLifetime
         Assert.Equal(0m, (await service.Bill(id)).Total);
         Assert.Equal(2, ticket.Items.Single().Quantity);
     }
-    [Fact] public async Task CashierOrdersIncludePendingAndSettledButContinueExcludesSettled()
+    [Fact] public async Task CashierOnlyIncludesSettledAndContinueExcludesSettled()
     {
         var open = await service.Create(Request("open-for-waiter"), "waiter");
         var ongoing = await service.Create(Request("ongoing-for-cashier"), "waiter");
@@ -398,23 +385,38 @@ public sealed class OrderingTests : IAsyncLifetime
         await QueueCheckout(ongoing); var version = await QueueCheckout(settled);
         await service.Checkout(settled, new(version, 17m, PaymentMethod.Cash, 20m, "", "settle-history"), "waiter");
         var cashier = await service.CashierOrders();
-        Assert.Contains(cashier, o => o.Id == ongoing && o.Status == OrderStatus.AwaitingPayment);
+        Assert.DoesNotContain(cashier, o => o.Id == ongoing);
         Assert.Contains(cashier, o => o.Id == settled && o.Status == OrderStatus.Closed);
         Assert.DoesNotContain(cashier, o => o.Id == open);
         var continued = await service.Active();
         Assert.DoesNotContain(continued, o => o.Id == settled);
         Assert.Contains(continued, o => o.Id == open); Assert.Contains(continued, o => o.Id == ongoing);
     }
-    [Fact] public async Task PaymentAndUndoCheckoutCannotBothSucceed()
+    [Fact] public async Task PaymentAndItemEditCannotBothSucceedWithSameVersion()
     {
-        var id = await service.Create(Request(), "waiter"); var version = await QueueCheckout(id);
-        async Task<bool> TryUndo() { try { await service.UndoCheckout(id, new(version, "race-undo"), "waiter"); return true; } catch (BusinessException) { return false; } }
-        async Task<bool> TryPay() { try { await service.Checkout(id, new(version, 17m, PaymentMethod.Cash, 20m, "", "race-payment"), "waiter"); return true; } catch (BusinessException) { return false; } }
-        var result = await Task.WhenAll(Task.Run(TryUndo), Task.Run(TryPay));
-        Assert.Single(result, successful => successful);
+        var id = await service.Create(Request(), "waiter"); var version = (await service.Bill(id)).Version;
+        async Task<bool> TryEdit() { try { await service.Add(id, new(version, [new(1, 1)], "race-edit"), "waiter"); return true; } catch (BusinessException) { return false; } }
+        async Task<bool> TryPay() { try { await service.Checkout(id, new(version, 17m, PaymentMethod.QR, null, "", "race-pay"), "waiter"); return true; } catch (BusinessException) { return false; } }
+        var results = await Task.WhenAll(Task.Run(TryEdit), Task.Run(TryPay));
+        Assert.Single(results, x => x);
         var bill = await service.Bill(id);
-        if (bill.Status == OrderStatus.Open) { Assert.Empty(bill.Payments!); Assert.Equal(17m, bill.Balance); }
-        else { Assert.Equal(OrderStatus.Closed, bill.Status); Assert.Single(bill.Payments!); Assert.Equal(0m, bill.Balance); }
+        Assert.True(bill.Status == OrderStatus.Closed ? bill.Balance == 0m : bill.Total == 25.50m && bill.Paid == 0m);
+    }
+    [Fact] public async Task SettledBillsSortByPaymentTimeRatherThanOrderCreationOrKitchenUpdates()
+    {
+        var first = await service.Create(Request("created-first"), "waiter");
+        var second = await service.Create(Request("created-second"), "waiter");
+        foreach (var id in new[] { second, first })
+            await service.Checkout(id, new(1, 17m, PaymentMethod.QR, null, "", Guid.NewGuid().ToString()), "waiter");
+        await using (var db = factory.CreateDbContext())
+        {
+            var payments = await db.Payments.ToListAsync();
+            payments.Single(p => p.OrderId == first).ReceivedAtUtc = new DateTime(2026, 10, 28, 12, 0, 0, DateTimeKind.Utc);
+            payments.Single(p => p.OrderId == second).ReceivedAtUtc = new DateTime(2026, 10, 28, 11, 0, 0, DateTimeKind.Utc);
+            (await db.Orders.SingleAsync(o => o.Id == second)).UpdatedAtUtc = new DateTime(2026, 10, 28, 13, 0, 0, DateTimeKind.Utc);
+            await db.SaveChangesAsync();
+        }
+        Assert.Equal(new[] { first, second }, (await service.CashierOrders()).Select(o => o.Id));
     }
     private sealed class Events : IBusinessEvents { public List<BusinessEvent> Items { get; } = []; public Task Publish(BusinessEvent e) { lock (Items) Items.Add(e); return Task.CompletedTask; } }
     private sealed class Factory(DbContextOptions<PosDb> options) : IDbContextFactory<PosDb> { public PosDb CreateDbContext() => new(options); }

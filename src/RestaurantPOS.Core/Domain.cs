@@ -138,7 +138,6 @@ public record AddItemsInput(long Version, List<ItemInput> Items, string Idempote
 public record CancelInput(long Version, int Quantity, string Reason = "");
 public record CancelLineInput(Guid ItemId, int Quantity);
 public record CancelItemsInput(long Version, List<CancelLineInput> Items, string Reason = "", string IdempotencyKey = "");
-public record HandoffInput(long Version, string IdempotencyKey);
 public record TicketStatusInput(long Version, KitchenStatus Status);
 public record CheckoutInput(long Version, decimal Amount, PaymentMethod Method, decimal? CashTendered, string Reference, string IdempotencyKey);
 public record PaymentSelection(Guid OrderItemId, int Quantity);

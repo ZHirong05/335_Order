@@ -1,0 +1,23 @@
+<div class="quantity-control @(ButtonsOnRight ? "quantity-buttons-right" : "")" role="group" aria-label="@Label">
+    @if (!ButtonsOnRight)
+    {
+        <button type="button" disabled="@(Disabled || Value <= Min)" aria-label="@($"Decrease {Label}")" @onclick="() => SetValue(Value - 1)">&minus;</button>
+    }
+    <input type="number" aria-label="@Label" min="@Min" max="@Max" value="@Value" disabled="@Disabled" @onchange="Changed" />
+    @if (ButtonsOnRight)
+    {
+        <button type="button" disabled="@(Disabled || Value <= Min)" aria-label="@($"Decrease {Label}")" @onclick="() => SetValue(Value - 1)">&minus;</button>
+    }
+    <button type="button" disabled="@(Disabled || Value >= Max)" aria-label="@($"Increase {Label}")" @onclick="() => SetValue(Value + 1)">+</button>
+</div>
+@code {
+    [Parameter] public int Value { get; set; } = 1;
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public int Min { get; set; } = 1;
+    [Parameter] public int Max { get; set; } = 99;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool ButtonsOnRight { get; set; }
+    [Parameter] public string Label { get; set; } = "Quantity";
+    private Task SetValue(int value) => Disabled ? Task.CompletedTask : ValueChanged.InvokeAsync(Math.Clamp(value, Min, Max));
+    private Task Changed(ChangeEventArgs e) => SetValue(int.TryParse(e.Value?.ToString(), out var value) ? value : Min);
+}

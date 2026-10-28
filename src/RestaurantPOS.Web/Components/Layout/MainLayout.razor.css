@@ -10,7 +10,7 @@ main { min-width:0; }
 .workspace-nav ::deep a span { width:20px; font-size:22px; line-height:1; text-align:center; }
 .workspace-nav ::deep a.active { color:var(--brand-burgundy); background:var(--brand-nav-active); box-shadow:0 3px 10px #57232b18; font-weight:700; }
 .workspace-nav ::deep a:hover { background:var(--brand-nav-hover); color:var(--brand-nav); }
-.workspace-nav ::deep a.active:hover { background:#ffce59; color:var(--brand-burgundy); }
+.workspace-nav ::deep a.active:hover { background:#ffdf59; color:var(--brand-burgundy); }
 .workspace-nav ::deep a:focus-visible,.brand:focus-visible { outline:3px solid var(--brand-nav); outline-offset:3px; }
 .sidebar-footer { margin-top:auto; padding:28px 12px 0; color:var(--brand-nav); font-size:calc(12px * var(--small-text-scale)); line-height:1.9; }
 .sidebar-footer span { color:var(--brand-light-muted); font-size:calc(11px * var(--small-text-scale)); }

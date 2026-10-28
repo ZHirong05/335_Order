@@ -15,7 +15,7 @@ Core holds entities and DTOs; Infrastructure owns Identity, SQLite and transacti
 - [x] Role-authorized API and business hub
 - [x] Guided order-type/table/food selection, priced variations, category grids and cashier bill preview grid
 - [x] Newest-first kitchen/cashier displays and atomic full-bill checkout with cash tender/change, receipt and table release
-- [x] Daily display numbering with preserved internal references, saved-item previews, Add/Cancel order management, atomic batch cancellation and reversible cashier handoff before payment
+- [x] Daily display numbering with preserved internal references, saved-item previews, Add/Cancel order management, atomic batch cancellation and direct payment navigation and Back to order editing before payment
 - [x] Optional cancellation reasons, distinct kitchen state colors, shared ongoing/settled bill cards and live removal of settled waiter orders
 - [x] SQLite tests, backup smoke test, HTTP integration launch verification
 - [x] Documentation and Windows scripts (scripts need target-PC validation)
@@ -28,4 +28,4 @@ Core holds entities and DTOs; Infrastructure owns Identity, SQLite and transacti
 - Localization resources for English/Chinese/Malay (current page language is English)
 - Production hardening, full requested test matrix, browser/Android acceptance and service deployment validation
 
-Sending food returns to the waiter order list. Waiter Checkout hands an order to cashier without collecting payment or releasing its table. Undo checkout restores editing until payment is recorded. Cashier settlement closes the order and releases its table; unfinished kitchen work stays visible. Statistics and aggregate outstanding displays are deferred, with source IDs and financial records retained. Production acceptance and refunds are still pending.
+Sending food returns to Continue an order. Checkout opens payment without a handoff or order state change. Back returns to editing before any payment is recorded. Partial payments lock items and remain accessible through Continue payment. Cashier lists settled bills only. Final settlement closes the order and releases its table; unfinished kitchen work stays visible. Production acceptance and refunds remain pending.

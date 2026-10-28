@@ -1,7 +1,7 @@
 @{
     var items = Order.Items.Where(i => i.Quantity > i.CancelledQuantity).ToList();
     var destination = Order.Table == null ? "Take away" : $"Table {Order.Table.Number}";
-    var status = Order.Status switch { OrderStatus.Closed => "Settled", OrderStatus.AwaitingPayment => "Awaiting cashier", _ => "Open order" };
+    var status = Order.Status switch { OrderStatus.Closed => "Settled", OrderStatus.AwaitingPayment => "Partially paid", _ => "Open order" };
 }
 <a class="continue-order continue-order-preview @(Order.Status == OrderStatus.Closed ? "settled-order-preview" : "")" href="@Href" aria-label="@($"{ActionText}: {destination} {Order.DisplayNumber}")">
     <div class="continue-card-heading"><strong>@destination</strong><strong>@Order.DisplayNumber</strong></div>

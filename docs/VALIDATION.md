@@ -46,3 +46,7 @@ Headless Edge verified blank-reason cancellation without blurring the field, dis
 
 
 Item-based split payment validation: 48 automated tests passed, including persistent remaining quantities, idempotency, invalid selection rollback, stale/overpaid quantity rejection, full remaining settlement, table occupancy/release, and migration backfill for existing full payments. Headless Edge passed direct payment form, partial quantity payment, remaining quantities after reload, final consolidated receipt and 390px phone layout against an isolated SQLite database.
+
+Direct payment workflow: 48 tests pass after removing the handoff/undo endpoints. Coverage includes payment-versus-edit concurrency, direct split payment locking, settled-only cashier listing and a payment-page Back link to the still-editable unpaid order. Headless Edge at 390px passed Checkout navigation, Back to enabled Add Item, direct partial payment, remaining quantities after refresh, and final receipt completion.
+
+Bill layout and opt-in splits: 49 tests passed, including settled ordering by latest payment rather than creation or kitchen updates. Headless Edge verified hidden checkboxes by default, Split bill activation, multiple payer completion, reload behavior and phone width.

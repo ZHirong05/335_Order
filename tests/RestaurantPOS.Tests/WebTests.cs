@@ -41,9 +41,7 @@ public sealed class WebTests
         var bill = await client.GetFromJsonAsync<Bill>(created.Headers.Location!);
         Assert.Equal(21m, bill!.Total); Assert.Equal("Nasi Lemak (Large)", bill.Items.Single().Name);
         Assert.Contains("Nasi Lemak (Large)", await client.GetStringAsync("/api/kitchen/tickets"));
-        var queued = await client.PostAsJsonAsync($"/api/orders/{bill.OrderId}/request-checkout", new HandoffInput(bill.Version, Guid.NewGuid().ToString()));
-        Assert.Equal(HttpStatusCode.OK, queued.StatusCode);
-        var preview = await client.GetStringAsync("/cashier");
+        var preview = await client.GetStringAsync($"/cashier/{bill.OrderId}");
         Assert.Contains("Nasi Lemak (Large)", preview); Assert.Contains("Less chili", preview);
         Assert.Contains("RM 21.00", await client.GetStringAsync($"/cashier/{bill.OrderId}"));
         var orderPage = await client.GetStringAsync("/order");
@@ -108,7 +106,6 @@ public sealed class WebTests
         var request = new CreateOrderInput(OrderType.DineIn, 2, "Checkout integration", [new(1, 1)], Guid.NewGuid().ToString());
         var created = await waiter.PostAsJsonAsync("/api/orders", request); Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var bill = (await waiter.GetFromJsonAsync<Bill>(created.Headers.Location!))!;
-        Assert.Equal(HttpStatusCode.OK, (await waiter.PostAsJsonAsync($"/api/orders/{bill.OrderId}/request-checkout", new HandoffInput(bill.Version, Guid.NewGuid().ToString()))).StatusCode);
         bill = (await waiter.GetFromJsonAsync<Bill>(created.Headers.Location!))!;
         var payment = new CheckoutInput(bill.Version, bill.Balance, PaymentMethod.Cash, 20m, "Test counter", Guid.NewGuid().ToString());
         Assert.Equal(HttpStatusCode.Forbidden, (await waiter.PostAsJsonAsync($"/api/orders/{bill.OrderId}/checkout", payment)).StatusCode);
@@ -134,15 +131,14 @@ public sealed class WebTests
         var cancelled = await client.PostAsJsonAsync($"/api/orders/{bill.OrderId}/cancel-items", new { version = bill.Version, items = new[] { new { itemId = bill.Items.Single().Id, quantity = 1 } }, idempotencyKey = Guid.NewGuid().ToString() });
         Assert.Equal(HttpStatusCode.OK, cancelled.StatusCode);
         bill = (await client.GetFromJsonAsync<Bill>(created.Headers.Location!))!;
-        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync($"/api/orders/{bill.OrderId}/request-checkout", new HandoffInput(bill.Version, Guid.NewGuid().ToString()))).StatusCode);
         bill = (await client.GetFromJsonAsync<Bill>(created.Headers.Location!))!;
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync($"/api/orders/{bill.OrderId}/checkout", new CheckoutInput(bill.Version, bill.Balance, PaymentMethod.Cash, 20m, "", Guid.NewGuid().ToString()))).StatusCode);
         var cashier = await client.GetStringAsync("/cashier");
-        Assert.Contains("Ongoing bills", cashier); Assert.Contains("Settled bills", cashier);
+        Assert.DoesNotContain("Ongoing bills", cashier); Assert.Contains("Settled bills", cashier);
         Assert.Contains($"/cashier/{bill.OrderId}", cashier); Assert.Contains("View receipt", cashier);
         Assert.DoesNotContain($"/order/{bill.OrderId}", await client.GetStringAsync("/order"));
     }
-    [Fact] public async Task ContinueOrderPreviewHandoffUndoAndCancellationStayConsistent()
+    [Fact] public async Task PaymentPageBackReturnsToEditableOrder()
     {
         using var app = new TestApp(bypass: true); using var client = app.CreateClient();
         var csrf = await client.GetFromJsonAsync<Token>("/api/antiforgery"); client.DefaultRequestHeaders.Add("RequestVerificationToken", csrf!.token);
@@ -151,12 +147,14 @@ public sealed class WebTests
         var page = await client.GetStringAsync("/order"); Assert.Contains(bill.DisplayNumber, page); Assert.Contains("Nasi Lemak", page); Assert.DoesNotContain(bill.OrderNumber, page);
         page = await client.GetStringAsync($"/order/{bill.OrderId}"); Assert.Contains("Add Item", page); Assert.Contains("Cancel Item", page); Assert.DoesNotContain("Search food or drinks", page);
         Assert.DoesNotContain($"/cashier/{bill.OrderId}", await client.GetStringAsync("/cashier"));
-        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync($"/api/orders/{bill.OrderId}/request-checkout", new HandoffInput(bill.Version, Guid.NewGuid().ToString()))).StatusCode);
-        Assert.Contains($"/cashier/{bill.OrderId}", await client.GetStringAsync("/cashier"));
-        bill = (await client.GetFromJsonAsync<Bill>(created.Headers.Location!))!;
-        Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync($"/api/orders/{bill.OrderId}/undo-checkout", new HandoffInput(bill.Version, Guid.NewGuid().ToString()))).StatusCode);
         Assert.DoesNotContain($"/cashier/{bill.OrderId}", await client.GetStringAsync("/cashier"));
         bill = (await client.GetFromJsonAsync<Bill>(created.Headers.Location!))!;
+        Assert.DoesNotContain($"/cashier/{bill.OrderId}", await client.GetStringAsync("/cashier"));
+        bill = (await client.GetFromJsonAsync<Bill>(created.Headers.Location!))!;
+        var paymentPage = await client.GetStringAsync($"/cashier/{bill.OrderId}");
+        Assert.Contains($"/order/{bill.OrderId}", paymentPage);
+        Assert.DoesNotContain("Undo checkout", paymentPage);
+        Assert.Equal(OrderStatus.Open, bill.Status);
         var item = bill.Items.Single();
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync($"/api/orders/{bill.OrderId}/cancel-items", new CancelItemsInput(bill.Version, [new(item.Id, 3)], "Too many", Guid.NewGuid().ToString()))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync($"/api/orders/{bill.OrderId}/cancel-items", new CancelItemsInput(bill.Version, [new(item.Id, 1)], "No longer needed", Guid.NewGuid().ToString()))).StatusCode);

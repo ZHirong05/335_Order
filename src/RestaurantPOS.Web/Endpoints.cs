@@ -59,8 +59,6 @@ public static class Endpoints
         orders.MapGet("/orders/{id:guid}/bill", (Guid id, OrderService s) => s.Bill(id));
         api.MapPost("/orders/{id:guid}/checkout", (Guid id, CheckoutInput i, OrderService s, ClaimsPrincipal u) => s.Checkout(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Cashier"));
         api.MapPost("/orders/{id:guid}/split-payments", (Guid id, SplitPaymentInput i, OrderService s, ClaimsPrincipal u) => s.SplitPayment(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Cashier"));
-        api.MapPost("/orders/{id:guid}/request-checkout", (Guid id, HandoffInput i, OrderService s, ClaimsPrincipal u) => s.RequestCheckout(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Waiter"));
-        api.MapPost("/orders/{id:guid}/undo-checkout", (Guid id, HandoffInput i, OrderService s, ClaimsPrincipal u) => s.UndoCheckout(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Waiter", "Cashier"));
         api.MapPost("/orders/{id:guid}/cancel-items", (Guid id, CancelItemsInput i, OrderService s, ClaimsPrincipal u) => s.CancelItems(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Waiter"));
         api.MapPost("/orders", async (CreateOrderInput i, OrderService s, ClaimsPrincipal u) => { var id = await s.Create(i, Actor(u)); return Results.Created($"/api/orders/{id}", new { id }); }).RequireAuthorization(p => p.RequireRole("Admin", "Waiter"));
         api.MapPost("/orders/{id:guid}/items", (Guid id, AddItemsInput i, OrderService s, ClaimsPrincipal u) => s.Add(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Waiter"));

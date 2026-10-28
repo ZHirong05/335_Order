@@ -49,7 +49,7 @@
     }
     else if (step == OrderStep.Table)
     {
-        <div class="section-heading"><h2>Restaurant tables</h2><button class="secondary-button" @onclick="Reload">Refresh tables</button></div>
+        <div class="section-heading"><h2>Restaurant tables</h2></div>
         <p class="muted">Choose an available table to start an order, or an occupied table to add more food.</p>
         @if (tables.Count == 0) { <div class="empty-panel">No active tables are configured. You can still create a takeaway order.</div> }
         <div class="table-grid">
@@ -57,7 +57,7 @@
             {
                 var occupied = active.FirstOrDefault(o => o.TableId == t.Id);
                 <button class="selection-card table-choice @(occupied != null ? "table-occupied" : "")" @onclick="() => ChooseTable(t)">
-                    <span class="status-badge @(occupied != null ? "status-occupied" : "status-available")">@(occupied == null ? "Available" : occupied.Status == OrderStatus.AwaitingPayment ? "Awaiting payment" : "Occupied")</span>
+                    <span class="status-badge @(occupied != null ? "status-occupied" : "status-available")">@(occupied == null ? "Available" : "Occupied")</span>
                     <strong>Table @t.Number</strong><span>@t.Capacity seats</span><span class="choice-next">@(occupied == null ? "Start order →" : "Add to order →")</span>
                 </button>
             }
@@ -65,14 +65,14 @@
     }
     else if (step == OrderStep.Actions && existingBill != null)
     {
-        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>@(existingBill.Status == OrderStatus.AwaitingPayment ? "Awaiting cashier" : "Continue an order")</span></div>
-        @if (existingBill.Status == OrderStatus.AwaitingPayment)
+        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>Continue an order</span></div>
+        @if ((existingBill.Payments?.Count ?? 0) > 0)
         {
-            <div class="notice"><span>@((existingBill.Payments?.Count ?? 0) == 0 ? "This order has been sent to cashier. Undo checkout to edit it." : "A payment has been recorded. Complete the remaining balance at cashier.")</span>@if ((existingBill.Payments?.Count ?? 0) == 0) { <button disabled="@busy" @onclick="UndoHandoff">Undo checkout</button> }<a href="@($"/cashier/{targetOrderId}")">View bill &rarr;</a></div>
+            <div class="notice">A payment has been recorded. Complete the remaining balance before closing this order.</div>
         }
         <div class="order-action-grid">
-            <button class="selection-card" disabled="@(busy || existingBill.Status != OrderStatus.Open)" @onclick="() => step = OrderStep.Food"><span class="choice-symbol" aria-hidden="true">+</span><strong>Add Item</strong><span>Choose food and add another kitchen ticket.</span></button>
-            <button class="selection-card" disabled="@(busy || existingBill.Status != OrderStatus.Open)" @onclick="() => step = OrderStep.Cancel"><span class="choice-symbol" aria-hidden="true">-</span><strong>Cancel Item</strong><span>Select items and quantities to cancel.</span></button>
+            <button class="selection-card" disabled="@(busy || existingBill.Status == OrderStatus.Closed || (existingBill.Payments?.Count ?? 0) > 0)" @onclick="() => step = OrderStep.Food"><span class="choice-symbol" aria-hidden="true">+</span><strong>Add Item</strong><span>Choose food and add another kitchen ticket.</span></button>
+            <button class="selection-card" disabled="@(busy || existingBill.Status == OrderStatus.Closed || (existingBill.Payments?.Count ?? 0) > 0)" @onclick="() => step = OrderStep.Cancel"><span class="choice-symbol" aria-hidden="true">-</span><strong>Cancel Item</strong><span>Select items and quantities to cancel.</span></button>
         </div>
         <section class="current-order-panel"><div class="section-heading"><h2>Your order</h2><span>@existingBill.Items.Sum(i => i.Quantity) items</span></div>
             @foreach (var item in existingBill.Items)
@@ -80,7 +80,7 @@
                 <div class="saved-order-line @(item.Quantity == 0 ? "cancelled-line" : "")"><strong>@item.Quantity &times; @item.Name</strong>@if (item.Quantity == 0) { <span>Cancelled</span> }@if (item.Notes.Length > 0) { <span>@item.Notes</span> }</div>
             }
         </section>
-        @if (existingBill.Status == OrderStatus.Open) { <button class="checkout-order-button" disabled="@busy" @onclick="CheckoutHandoff">@(busy ? "Sending to cashier..." : "Checkout \u2192")</button> }
+        @if (existingBill.Status != OrderStatus.Closed) { <div class="order-checkout-actions"><a class="action checkout-order-button" href="@($"/cashier/{targetOrderId}")">@((existingBill.Payments?.Count ?? 0) > 0 ? "Continue payment" : "Checkout") &rarr;</a></div> }
     }
     else if (step == OrderStep.Cancel && existingBill != null)
     {
@@ -133,10 +133,10 @@
                 @foreach (var line in cart)
                 {
                     <div class="cart-line" @key="line">
-                        <div class="cart-line-heading"><strong>@line.MenuName</strong><button class="text-button" disabled="@busy" @onclick="() => cart.Remove(line)" aria-label="@($"Remove {line.MenuName} {line.VariationName}")">Remove</button></div>
+                        <div class="cart-line-heading"><strong>@line.MenuName</strong><button class="cart-remove-button" disabled="@busy" @onclick="() => cart.Remove(line)" aria-label="@($"Remove {line.MenuName} {line.VariationName}")">Remove</button></div>
                         <span class="muted">@line.VariationName · RM @line.UnitPrice.ToString("0.00") each</span>
                         @if (line.Notes.Length > 0) { <p class="cart-notes">@line.Notes</p> }
-                        <div class="cart-quantity"><label>Quantity<input type="number" min="1" max="99" disabled="@busy" @bind="line.Quantity" /></label><strong>RM @((line.Quantity * line.UnitPrice).ToString("0.00"))</strong></div>
+                        <div class="cart-quantity"><div class="quantity-field"><span>Quantity</span><QuantityInput @bind-Value="line.Quantity" Disabled="busy" /></div><strong>RM @((line.Quantity * line.UnitPrice).ToString("0.00"))</strong></div>
                     </div>
                 }
                 @if (!targetOrderId.HasValue) { <label>Order notes<textarea maxlength="500" disabled="@busy" placeholder="Any instructions for the whole order?" @bind="notes"></textarea></label> }
@@ -163,7 +163,7 @@
                         <button type="button" class="variation-option @(selectedVariationId == option.Id ? "is-selected" : "")" aria-pressed="@(selectedVariationId == option.Id ? "true" : "false")" @onclick="() => selectedVariationId = option.Id">@option.Name<strong>RM @((selected.Price + option.AdditionalPrice).ToString("0.00"))</strong></button>
                     }
                 </div></fieldset>
-                <label>Quantity<input type="number" min="1" max="99" required @bind="selectedQuantity" /></label>
+                <div class="quantity-field picker-quantity"><span>Quantity</span><QuantityInput @bind-Value="selectedQuantity" ButtonsOnRight="true" /></div>
                 <label>Kitchen notes<textarea maxlength="500" placeholder="For example: no chili, less sugar…" @bind="selectedNotes"></textarea></label>
                 @if (pickerError != null) { <p class="error" role="alert">@pickerError</p> }
                 <div class="picker-footer"><strong>RM @((PickerPrice * selectedQuantity).ToString("0.00"))</strong><button type="submit" disabled="@(selected.Variations.Count > 0 && !selectedVariationId.HasValue)">Add to order</button></div>
@@ -188,7 +188,7 @@
     private string? error, success;
     private Bill? existingBill;
     private readonly Dictionary<Guid, int> cancelSelections = [];
-    private string cancelReason = "", cancelKey = Guid.NewGuid().ToString(), handoffKey = Guid.NewGuid().ToString();
+    private string cancelReason = "", cancelKey = Guid.NewGuid().ToString();
     private string key = Guid.NewGuid().ToString();
     private long version;
     private MenuItem? selected;
@@ -305,24 +305,6 @@
         }
         catch (BusinessException ex) { error = ex.Message; }
         catch { error = "Could not confirm cancellation. Retry the same selection or refresh to reconcile."; }
-        finally { busy = false; }
-    }
-    private async Task CheckoutHandoff()
-    {
-        if (busy || existingBill == null || !targetOrderId.HasValue) return;
-        busy = true; error = null;
-        try { await Service.RequestCheckout(targetOrderId.Value, new(existingBill.Version, handoffKey), await WaiterActor()); Nav.NavigateTo($"/cashier/{targetOrderId}"); }
-        catch (BusinessException ex) { error = ex.Message; }
-        catch { error = "Could not confirm checkout. Refresh the order before retrying."; }
-        finally { busy = false; }
-    }
-    private async Task UndoHandoff()
-    {
-        if (busy || existingBill == null || !targetOrderId.HasValue) return;
-        busy = true; error = null;
-        try { await Service.UndoCheckout(targetOrderId.Value, new(existingBill.Version, Guid.NewGuid().ToString()), await WaiterActor()); await Reload(); handoffKey = Guid.NewGuid().ToString(); success = "Checkout undone. You can edit the order again."; }
-        catch (BusinessException ex) { error = ex.Message; }
-        catch { error = "Could not undo checkout. Refresh to check the order status."; }
         finally { busy = false; }
     }
     private void OpenPicker(MenuItem item) { selected = item; selectedVariationId = null; selectedQuantity = 1; selectedNotes = ""; pickerError = null; focusPicker = true; }

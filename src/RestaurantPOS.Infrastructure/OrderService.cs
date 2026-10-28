@@ -17,8 +17,8 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
     {
         await using var db = await factory.CreateDbContextAsync();
         return await db.Orders.AsNoTracking().Include(x => x.Table).Include(x => x.Items)
-            .Where(x => x.Status == OrderStatus.AwaitingPayment || x.Status == OrderStatus.Closed)
-            .OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id).ToListAsync();
+            .Where(x => x.Status == OrderStatus.Closed)
+            .OrderByDescending(x => db.Payments.Where(p => p.OrderId == x.Id).Max(p => (DateTime?)p.ReceivedAtUtc) ?? x.UpdatedAtUtc).ThenByDescending(x => x.Id).ToListAsync();
     }
     public async Task<Bill> Bill(Guid id)
     {
@@ -55,13 +55,13 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
     public Task<Guid> Add(Guid id, AddItemsInput input, string actor) => Write(actor, input.IdempotencyKey, new { id, input }, async db =>
     {
         var o = await Load(db, id, input.Version);
-        RequireEditable(o);
+        await RequireEditable(db, o);
         await Append(db, o, input.Items);
         return (o, "KitchenTicketCreated", (object)new { Count = input.Items.Count });
     });
     public Task<Guid> Cancel(Guid id, Guid itemId, CancelInput input, string actor) => Write(actor, null, input, async db =>
     {
-        var o = await Load(db, id, input.Version); RequireEditable(o);
+        var o = await Load(db, id, input.Version); await RequireEditable(db, o);
         await ApplyCancellation(db, id, itemId, input.Quantity, input.Reason);
         return (o, "ItemCancelled", (object)new { itemId, input.Quantity, input.Reason });
     });
@@ -70,7 +70,7 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
         RequireKey(input.IdempotencyKey);
         return Write(actor, input.IdempotencyKey, new { Operation = "CancelItems", id, input }, async db =>
         {
-            var o = await Load(db, id, input.Version); RequireEditable(o);
+            var o = await Load(db, id, input.Version); await RequireEditable(db, o);
             if (input.Items == null || input.Items.Count is < 1 or > 100 || input.Items.Any(x => x is null) || input.Items.Select(x => x.ItemId).Distinct().Count() != input.Items.Count)
                 throw new BusinessException("Select distinct items to cancel", 400);
             foreach (var line in input.Items) await ApplyCancellation(db, id, line.ItemId, line.Quantity, input.Reason);
@@ -93,22 +93,13 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
             if (ticket.Items.All(x => x.Status == KitchenStatus.Cancelled)) ticket.Status = KitchenStatus.Cancelled;
         }
     }
-    public Task<Guid> RequestCheckout(Guid id, HandoffInput input, string actor) => Handoff(id, input, actor, undo: false);
-    public Task<Guid> UndoCheckout(Guid id, HandoffInput input, string actor) => Handoff(id, input, actor, undo: true);
-    private Task<Guid> Handoff(Guid id, HandoffInput input, string actor, bool undo)
-    {
-        RequireKey(input.IdempotencyKey);
-        return Write(actor, input.IdempotencyKey, new { Operation = undo ? "UndoCheckout" : "RequestCheckout", id, input }, async db =>
-        {
-            var o = await Load(db, id, input.Version);
-            if (await db.Payments.AnyAsync(p => p.OrderId == id)) throw new BusinessException("Paid orders cannot be returned for editing");
-            if (o.Status != (undo ? OrderStatus.AwaitingPayment : OrderStatus.Open)) throw new BusinessException("Order status changed. Refresh before continuing.");
-            o.Status = undo ? OrderStatus.Open : OrderStatus.AwaitingPayment;
-            return (o, "OrderUpdated", (object)new { Action = undo ? "CheckoutUndone" : "CheckoutRequested", o.Status });
-        });
-    }
     private static void RequireKey(string? key) { if (string.IsNullOrWhiteSpace(key)) throw new BusinessException("An idempotency key is required", 400); }
-    private static void RequireEditable(Order o) { if (o.Status != OrderStatus.Open) throw new BusinessException("Undo checkout before editing this order"); }
+    private static async Task RequireEditable(PosDb db, Order o)
+    {
+        if (o.Status == OrderStatus.Closed || await db.Payments.AnyAsync(p => p.OrderId == o.Id))
+            throw new BusinessException("Orders with recorded payments cannot be edited");
+        o.Status = OrderStatus.Open;
+    }
     public Task<Guid> SetTicket(Guid id, TicketStatusInput input, string actor) => Write(actor, null, input, async db =>
     {
         var t = await db.Tickets.Include(x => x.Items).ThenInclude(x => x.OrderItem).SingleOrDefaultAsync(x => x.Id == id) ?? throw new BusinessException("Ticket not found", 404);
@@ -133,7 +124,7 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
     private static async Task<(Order Order, string Event, object Details)> RecordPayment(PosDb db, Guid id, long version, List<PaymentSelection>? selections, decimal amount, PaymentMethod method, decimal? cashTendered, string reference, string key, string actor)
     {
         var order = await Load(db, id, version);
-        if (order.Status != OrderStatus.AwaitingPayment) throw new BusinessException("Send the order to cashier before recording payment");
+        order.Status = OrderStatus.AwaitingPayment;
         if (!Enum.IsDefined(method) || (reference?.Length ?? 0) > 100 || !ValidMoney(amount)) throw new BusinessException("Invalid payment method, amount or reference", 400);
         var items = await db.OrderItems.Where(x => x.OrderId == id).ToListAsync();
         var previous = await db.Payments.Include(p => p.Allocations).Where(p => p.OrderId == id).ToListAsync();
