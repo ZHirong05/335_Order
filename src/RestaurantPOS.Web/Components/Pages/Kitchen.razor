@@ -7,10 +7,7 @@
 @inject AuthenticationStateProvider Authentication
 @inject IJSRuntime JS
 <PageTitle>Kitchen · 335 Order</PageTitle>
-<h1>Kitchen display</h1>
-<button @onclick="EnableSound">Enable sound</button><span> @soundStatus</span>
-<div class="kitchen-status-legend" aria-label="Kitchen item colors"><span class="kitchen-added">New</span><span class="kitchen-preparing">Preparing</span><span class="kitchen-ready">Ready</span><span class="kitchen-cancelled">Cancelled</span></div>
-<p><a href="/dashboard">Dashboard</a> · Database reconciliation every 5 seconds · Last sync: @lastSync</p>
+<h1>订单</h1>
 @if (error != null) { <p class="error" role="alert">@error</p> }
 @if (tickets == null) { <p>Loading kitchen tickets…</p> }
 else if (tickets.Count == 0) { <p>No outstanding orders.</p> }
@@ -20,10 +17,10 @@ else
     @foreach (var t in tickets)
     {
         <section class="card kitchen-card @(t.Status == KitchenStatus.Cancelled ? "cancelled" : t.Status == KitchenStatus.Ready ? "kitchen-card-ready" : "")">
-            <h2>@(t.Order.Table == null ? "TAKEAWAY" : $"TABLE {t.Order.Table.Number}") · @t.Status.ToString().ToUpperInvariant()</h2>
+            <h2>@(t.Order.Table == null ? "TAKEAWAY" : $"TABLE {t.Order.Table.Number}")@if (t.Status == KitchenStatus.Preparing) { <br /> } else { <text> · </text> }@StatusLabel(t.Status)</h2>
             <p>@t.Order.DisplayNumber · @t.Order.BusinessDate</p>
             @if (t.Order.Status == OrderStatus.Closed) { <p class="settled-label">PAID / CHECKED OUT · Continue preparing this ticket</p> }
-            <p>@Math.Max(0, (int)(DateTime.UtcNow - t.CreatedAtUtc).TotalMinutes) minutes elapsed</p>
+            <p>@(Math.Max(0, (int)(DateTime.UtcNow - t.CreatedAtUtc).TotalMinutes))分钟前</p>
             @foreach (var i in t.Items)
             {
                 @if (i.Quantity > i.OrderItem.CancelledQuantity) { <p class="@ItemColor(i.Status)"><strong>@(i.Quantity - i.OrderItem.CancelledQuantity) &times; @i.OrderItem.ItemNameSnapshot</strong>@if (!string.IsNullOrWhiteSpace(i.NotesSnapshot)) { <span> &middot; @i.NotesSnapshot</span> }</p> }
@@ -33,18 +30,17 @@ else
                 }
             }
             @if (t.Order.Notes.Length > 0) { <p>Order notes: <strong>@t.Order.Notes</strong></p> }
-            @if (t.Status == KitchenStatus.New) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Preparing)">Acknowledge / start preparing</button> }
-            @if (t.Status == KitchenStatus.Preparing) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Ready)">Mark ready</button> }
+            @if (t.Status == KitchenStatus.New) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Preparing)">正在准备</button> }
+            @if (t.Status == KitchenStatus.Preparing) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Ready)">完成</button> }
         </section>
     }
     </div>
 }
 @code {
+    private static string StatusLabel(KitchenStatus status) => status switch { KitchenStatus.New => "新", KitchenStatus.Preparing => "正在准备", KitchenStatus.Ready => "完成", _ => status.ToString().ToUpperInvariant() };
     private static string ItemColor(KitchenStatus status) => status switch { KitchenStatus.Preparing => "kitchen-preparing", KitchenStatus.Ready => "kitchen-ready", KitchenStatus.Cancelled => "kitchen-cancelled", _ => "kitchen-added" };
-    private List<KitchenTicket>? tickets; private string? error; private string lastSync = "waiting"; private bool busy;
+    private List<KitchenTicket>? tickets; private string? error; private bool busy;
     private readonly CancellationTokenSource stop = new(); private Task? reconcile;
-    private string soundStatus = "Sound is off. Keep this page visible.";
-    private async Task EnableSound() { try { soundStatus = await JS.InvokeAsync<bool>("kitchenSound.enable") ? "Sound enabled" : "Browser blocked audio"; } catch { soundStatus = "Audio unavailable in this browser"; } }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (tickets != null) try { await JS.InvokeVoidAsync("kitchenSound.reconcile", (object)tickets.Select(x => x.Id.ToString()).ToArray()); } catch (JSDisconnectedException) { }
@@ -53,7 +49,7 @@ else
     private void Changed(BusinessEvent e) => _ = InvokeAsync(async () => { await Reload(); StateHasChanged(); });
     private async Task Reload()
     {
-        try { tickets = await Service.Tickets(); error = null; lastSync = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Kuala_Lumpur")).ToString("HH:mm:ss"); }
+        try { tickets = await Service.Tickets(); error = null; }
         catch { error = "Kitchen data unavailable. Retrying automatically…"; }
     }
     private async Task Poll()

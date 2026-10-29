@@ -3,6 +3,7 @@ main { min-width:0; }
 .sidebar { background:var(--brand-sidebar); border-right:1px solid var(--brand-primary-hover); color:var(--brand-nav); padding:32px 20px; display:flex; flex-direction:column; height:100vh; position:sticky; top:0; }
 .brand { display:flex; align-items:center; gap:12px; color:#fff; text-decoration:none; font-size:23px; font-weight:700; letter-spacing:-.5px; margin:0 8px 48px; }
 .brand-mark { display:grid; place-items:center; width:48px; height:48px; background:var(--brand-gold); color:var(--brand-burgundy); border-radius:14px; font-size:20px; letter-spacing:-1px; }
+.brand-logo { display:block; width:100%; height:auto; object-fit:contain; }
 .brand-caption { display:block; color:var(--brand-light-muted); font-size:calc(8px * var(--small-text-scale)); letter-spacing:1.6px; margin-top:3px; font-weight:500; }
 .nav-caption { color:var(--brand-light-muted); font-size:calc(10px * var(--small-text-scale)); letter-spacing:2px; margin:0 16px 16px; font-weight:600; }
 .workspace-nav { display:flex; flex-direction:column; gap:8px; }

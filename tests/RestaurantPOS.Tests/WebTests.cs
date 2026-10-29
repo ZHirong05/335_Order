@@ -45,7 +45,7 @@ public sealed class WebTests
         Assert.Contains("Nasi Lemak (Large)", preview); Assert.Contains("Less chili", preview);
         Assert.Contains("RM 21.00", await client.GetStringAsync($"/cashier/{bill.OrderId}"));
         var orderPage = await client.GetStringAsync("/order");
-        Assert.Contains("Take away", orderPage); Assert.Contains("Dine-in", orderPage);
+        Assert.Contains("打包", orderPage); Assert.Contains("吃", orderPage);
     }
     [Fact] public async Task FirstRunSetupRequiresSecretAndClosesAfterAdminCreation()
     {

@@ -30,10 +30,10 @@
     {
         <div class="order-type-grid">
             <button class="selection-card order-type-card" @onclick="() => ChooseType(OrderType.Takeaway)">
-                <span class="choice-symbol" aria-hidden="true">↗</span><strong>Take away</strong><span>Pack it up. Choose food and send straight to the kitchen.</span><span class="choice-next">Select food →</span>
+                <span class="choice-symbol" aria-hidden="true">↗</span><strong>打包</strong><span>Pack it up. Choose food and send straight to the kitchen.</span><span class="choice-next">Select food →</span>
             </button>
             <button class="selection-card order-type-card" @onclick="() => ChooseType(OrderType.DineIn)">
-                <span class="choice-symbol" aria-hidden="true">▦</span><strong>Dine-in</strong><span>Settle in. Choose a table before adding food.</span><span class="choice-next">Select a table →</span>
+                <span class="choice-symbol" aria-hidden="true">▦</span><strong>吃</strong><span>Settle in. Choose a table before adding food.</span><span class="choice-next">Select a table →</span>
             </button>
         </div>
         @if (active.Count > 0)
@@ -90,7 +90,7 @@
         {
             <div class="cancel-selection-row">
                 <label class="cancel-checkbox"><input type="checkbox" disabled="@busy" checked="@cancelSelections.ContainsKey(item.Id)" @onchange="e => SelectCancellation(item.Id, e.Value is true)" /><span><strong>@item.Name</strong><small>@item.Quantity remaining &middot; @item.Notes</small></span></label>
-                <label>Cancel quantity<input type="number" min="1" max="@item.Quantity" disabled="@(busy || !cancelSelections.ContainsKey(item.Id))" value="@cancelSelections.GetValueOrDefault(item.Id, 1)" @onchange="e => ChangeCancelQuantity(item.Id, item.Quantity, e.Value?.ToString())" /></label>
+                <div class="quantity-field"><span>Cancel quantity</span><QuantityInput Value="@cancelSelections.GetValueOrDefault(item.Id, 1)" ValueChanged="value => ChangeCancelQuantity(item.Id, item.Quantity, value.ToString())" Max="item.Quantity" Disabled="@(busy || !cancelSelections.ContainsKey(item.Id))" Label="Cancel quantity" /></div>
             </div>
         }
         <label>Cancellation reason (optional)<textarea maxlength="500" disabled="@busy" @bind="cancelReason" @bind:event="oninput" placeholder="Add a note for the kitchen if needed"></textarea></label>

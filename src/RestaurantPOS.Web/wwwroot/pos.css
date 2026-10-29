@@ -267,7 +267,8 @@ textarea:focus-visible { outline:3px solid var(--brand-focus); outline-offset:3p
 .kitchen-added { color:#28733e; font-weight:600; }
 .card.kitchen-card { display:flex; flex-direction:column; }
 .kitchen-card>button { margin-top:auto; width:100%; }
-.kitchen-preparing,.kitchen-ready { color:#000; font-weight:600; }
+.kitchen-preparing { color:#a87800; font-weight:600; }
+.kitchen-ready { color:#000; font-weight:600; }
 .kitchen-cancelled { color:var(--brand-error); font-weight:600; }
 .card.kitchen-card-ready { background:#eeefed; border-color:#d1d4cf; box-shadow:none; }
 .kitchen-status-legend { display:flex; flex-wrap:wrap; gap:18px; margin:16px 0; font-size:calc(11px * var(--small-text-scale)); }
@@ -292,6 +293,9 @@ textarea:focus-visible { outline:3px solid var(--brand-focus); outline-offset:3p
 .quantity-control>input { flex:1; min-width:0; width:0; padding:8px 2px; text-align:center; border:0; border-radius:0; appearance:textfield; -moz-appearance:textfield; }
 .quantity-control input::-webkit-inner-spin-button,.quantity-control input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
 .quantity-buttons-right { width:100%; }
+.cart-quantity .quantity-control { width:126px; }
+.cart-quantity .quantity-control>button { flex-basis:37px; min-height:41px; font-size:20px; }
+.cart-quantity .quantity-control>input { min-height:41px; font-size:calc(10.2px * var(--small-text-scale)); padding:6px 2px; }
 .quantity-buttons-right>input { text-align:left; padding-left:14px; }
 .picker-quantity { margin:1rem 0; }
 .split-line-total { min-width:100px; text-align:right; }

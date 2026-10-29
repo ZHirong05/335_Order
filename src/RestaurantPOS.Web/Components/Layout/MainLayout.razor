@@ -1,10 +1,19 @@
 ﻿@inherits LayoutComponentBase
 
-@inject IHostEnvironment Environment
+@inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
 <div class="page">
     <div class="sidebar">
-        <a class="brand" href="/dashboard"><span class="brand-mark">335</span><span>Order<span class="brand-caption">RESTAURANT WORKSPACE</span></span></a>
+        <a class="brand" href="/dashboard" aria-label="335 Food Gallery home">
+            @if (System.IO.File.Exists(System.IO.Path.Combine(Environment.WebRootPath, "images", "335-logo.png")))
+            {
+                <img class="brand-logo" src="/images/335-logo.png" alt="335 Food Gallery" width="715" height="163" />
+            }
+            else
+            {
+                <span class="brand-mark">335</span><span>Order<span class="brand-caption">RESTAURANT WORKSPACE</span></span>
+            }
+        </a>
         <div class="nav-caption">WORKSPACE</div>
         <nav class="workspace-nav" aria-label="Main navigation">
             <NavLink href="/dashboard"><span aria-hidden="true">▦</span> Overview</NavLink>
@@ -25,10 +34,6 @@
         </div>
 
         <article class="content">
-            @if (DevelopmentPreview.Enabled(Environment, Configuration))
-            {
-                <div class="preview-banner" role="status"><span class="preview-dot" aria-hidden="true"></span> Development preview <span class="preview-description">Admin access · Sign-in skipped</span></div>
-            }
             @Body
         </article>
     </main>
