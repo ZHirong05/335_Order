@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RestaurantPOS.Core\RestaurantPOS.Core.csproj" />
+    <EmbeddedResource Include="Catalog\book1-menu.json" />
   </ItemGroup>
 
   <ItemGroup>

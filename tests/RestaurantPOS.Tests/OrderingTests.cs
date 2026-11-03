@@ -138,8 +138,10 @@ public sealed class OrderingTests : IAsyncLifetime
         {
             await db.GetService<IMigrator>().MigrateAsync("20261026141506_InitialOrdering");
             db.Users.Add(new ApplicationUser { Id = "waiter", UserName = "waiter" });
-            db.Menu.Add(new() { Id = 1, Category = new() { Name = "Food" }, Name = "Existing dish", Price = 8.50m });
             await db.SaveChangesAsync();
+            // Use the historical schema rather than today's category model.
+            await db.Database.ExecuteSqlRawAsync("INSERT INTO Categories (Id, Name, SortOrder, IsActive) VALUES (1, 'Food', 0, 1)");
+            await db.Database.ExecuteSqlRawAsync("INSERT INTO Menu (Id, CategoryId, Name, Description, Price, IsAvailable, SortOrder) VALUES (1, 1, 'Existing dish', '', 850, 1, 0)");
         }
         var oldService = new OrderService(oldFactory, events);
         var id = Guid.NewGuid(); var itemId = Guid.NewGuid(); var ticketId = Guid.NewGuid();
@@ -413,10 +415,30 @@ public sealed class OrderingTests : IAsyncLifetime
             var payments = await db.Payments.ToListAsync();
             payments.Single(p => p.OrderId == first).ReceivedAtUtc = new DateTime(2026, 10, 28, 12, 0, 0, DateTimeKind.Utc);
             payments.Single(p => p.OrderId == second).ReceivedAtUtc = new DateTime(2026, 10, 28, 11, 0, 0, DateTimeKind.Utc);
+            foreach (var closed in await db.Events.Where(e => e.EventType == "OrderClosed").ToListAsync())
+                closed.CreatedAtUtc = payments.Single(p => p.OrderId == closed.OrderId).ReceivedAtUtc;
             (await db.Orders.SingleAsync(o => o.Id == second)).UpdatedAtUtc = new DateTime(2026, 10, 28, 13, 0, 0, DateTimeKind.Utc);
             await db.SaveChangesAsync();
         }
-        Assert.Equal(new[] { first, second }, (await service.CashierOrders()).Select(o => o.Id));
+        var cashier = new OrderService(factory, events, new TestClock(DateTimeOffset.Parse("2026-10-28T12:30:00Z")));
+        Assert.Equal(new[] { first, second }, (await cashier.CashierOrders()).Select(o => o.Id));
+    }
+    [Fact] public async Task CashierOnlyShowsBillsClosedWithinTodayInMalaysia()
+    {
+        var times = new[] { "2026-11-02T15:59:59Z", "2026-11-02T16:00:00Z", "2026-11-03T15:59:59Z", "2026-11-03T16:00:00Z" };
+        var ids = new List<Guid>();
+        foreach (var time in times)
+        {
+            var id = await service.Create(Request($"boundary-{ids.Count}"), "waiter"); ids.Add(id);
+            await service.Checkout(id, new(1, 17m, PaymentMethod.QR, null, "", Guid.NewGuid().ToString()), "waiter");
+            await using var db = factory.CreateDbContext();
+            (await db.Events.SingleAsync(e => e.OrderId == id && e.EventType == "OrderClosed")).CreatedAtUtc = DateTimeOffset.Parse(time).UtcDateTime;
+            (await db.Orders.SingleAsync(o => o.Id == id)).UpdatedAtUtc = DateTimeOffset.Parse("2026-11-04T08:00:00Z").UtcDateTime;
+            await db.SaveChangesAsync();
+        }
+        var cashier = new OrderService(factory, events, new TestClock(DateTimeOffset.Parse("2026-11-03T04:00:00Z")));
+        Assert.Equal(new[] { ids[2], ids[1] }, (await cashier.CashierOrders()).Select(o => o.Id));
+        Assert.Equal(OrderStatus.Closed, (await service.Bill(ids[0])).Status);
     }
     private sealed class Events : IBusinessEvents { public List<BusinessEvent> Items { get; } = []; public Task Publish(BusinessEvent e) { lock (Items) Items.Add(e); return Task.CompletedTask; } }
     private sealed class Factory(DbContextOptions<PosDb> options) : IDbContextFactory<PosDb> { public PosDb CreateDbContext() => new(options); }

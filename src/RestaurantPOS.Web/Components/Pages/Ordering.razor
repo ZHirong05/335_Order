@@ -7,38 +7,38 @@
 @inject OrderService Service
 @inject AuthenticationStateProvider Authentication
 @inject NavigationManager Nav
-<PageTitle>Take an order · 335 Order</PageTitle>
+<PageTitle>@Text["Take an order"] · 335 Order</PageTitle>
 <div class="ordering-content" inert="@(selected != null)">
     @if (step == OrderStep.Table)
     {
         <div class="flow-heading">
-            <div><p class="eyebrow">WAITER WORKSPACE</p><h1>Choose a table.</h1><p class="page-subtitle">Every table, ready at a glance.</p></div>
+            <div><p class="eyebrow">@Text["WAITER WORKSPACE"]</p><h1>@Text["Choose a table."]</h1><p class="page-subtitle">@Text["Every table, ready at a glance."]</p></div>
         </div>
     }
     <div class="order-toolbar @(step != OrderStep.Type ? "has-back" : "")">
         <ol class="order-steps" aria-label="Order progress">
-            <li class="@(step == OrderStep.Type ? "current-step" : "")"><span class="step-label-full">1. Order type</span><span class="step-label-short">1. Type</span></li>
-            @if (type == OrderType.DineIn && step != OrderStep.Type) { <li class="@(step == OrderStep.Table ? "current-step" : "")"><span class="step-label-full">2. Select table</span><span class="step-label-short">2. Table</span></li> }
-            <li class="@(step is OrderStep.Food or OrderStep.Actions or OrderStep.Cancel ? "current-step" : "")"><span class="step-label-full">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). @(targetOrderId.HasValue && step != OrderStep.Food ? "Manage order" : "Select food")</span><span class="step-label-short">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). @(targetOrderId.HasValue && step != OrderStep.Food ? "Order" : "Food")</span></li>
+            <li class="@(step == OrderStep.Type ? "current-step" : "")"><span class="step-label-full">1. @Text["Order type"]</span><span class="step-label-short">1. @Text["Type"]</span></li>
+            @if (type == OrderType.DineIn && step != OrderStep.Type) { <li class="@(step == OrderStep.Table ? "current-step" : "")"><span class="step-label-full">2. @Text["Select table"]</span><span class="step-label-short">2. @Text["Table"]</span></li> }
+            <li class="@(step is OrderStep.Food or OrderStep.Actions or OrderStep.Cancel ? "current-step" : "")"><span class="step-label-full">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). @(targetOrderId.HasValue && step != OrderStep.Food ? Text["Manage order"] : Text["Select food"])</span><span class="step-label-short">@(type == OrderType.DineIn && step != OrderStep.Type ? "3" : "2"). @(targetOrderId.HasValue && step != OrderStep.Food ? Text["Order"] : Text["Food step"])</span></li>
         </ol>
-        @if (step != OrderStep.Type) { <button class="secondary-button order-back" disabled="@busy" @onclick="Back">← Back</button> }
+        @if (step != OrderStep.Type) { <button class="secondary-button order-back" disabled="@busy" @onclick="Back">← @Text["Back"]</button> }
     </div>
     @if (success != null) { <p class="notice" role="status">@success</p> }
-    @if (error != null) { <div class="notice error" role="alert">@error <button class="secondary-button" disabled="@busy" @onclick="Reload">Refresh data</button></div> }
-    @if (menu == null) { <p role="status">Loading menu and tables…</p> }
+    @if (error != null) { <div class="notice error" role="alert">@error <button class="secondary-button" disabled="@busy" @onclick="Reload">@Text["Refresh data"]</button></div> }
+    @if (menu == null) { <p role="status">@Text["Loading menu and tables…"]</p> }
     else if (step == OrderStep.Type)
     {
         <div class="order-type-grid">
             <button class="selection-card order-type-card" @onclick="() => ChooseType(OrderType.Takeaway)">
-                <span class="choice-symbol" aria-hidden="true">↗</span><strong>打包</strong><span>Pack it up. Choose food and send straight to the kitchen.</span><span class="choice-next">Select food →</span>
+                <span class="choice-symbol" aria-hidden="true">↗</span><strong>@Text["Take away"]</strong><span>@Text["Pack it up. Choose food and send straight to the kitchen."]</span><span class="choice-next">@Text["Select food"] →</span>
             </button>
             <button class="selection-card order-type-card" @onclick="() => ChooseType(OrderType.DineIn)">
-                <span class="choice-symbol" aria-hidden="true">▦</span><strong>吃</strong><span>Settle in. Choose a table before adding food.</span><span class="choice-next">Select a table →</span>
+                <span class="choice-symbol" aria-hidden="true">▦</span><strong>@Text["Dine-in"]</strong><span>@Text["Settle in. Choose a table before adding food."]</span><span class="choice-next">@Text["Select a table"] →</span>
             </button>
         </div>
         @if (active.Count > 0)
         {
-            <div class="section-heading"><h2>Continue an order</h2><span>Add items to an existing order</span></div>
+            <div class="section-heading"><h2>@Text["Continue an order"]</h2><span>@Text["Add items to an existing order"]</span></div>
             <div class="continue-grid">
                 @foreach (var o in active)
                 {
@@ -49,78 +49,78 @@
     }
     else if (step == OrderStep.Table)
     {
-        <div class="section-heading"><h2>Restaurant tables</h2></div>
-        <p class="muted">Choose an available table to start an order, or an occupied table to add more food.</p>
-        @if (tables.Count == 0) { <div class="empty-panel">No active tables are configured. You can still create a takeaway order.</div> }
+        <div class="section-heading"><h2>@Text["Restaurant tables"]</h2></div>
+        <p class="muted">@Text["Choose an available table to start an order, or an occupied table to add more food."]</p>
+        @if (tables.Count == 0) { <div class="empty-panel">@Text["No active tables are configured. You can still create a takeaway order."]</div> }
         <div class="table-grid">
             @foreach (var t in tables)
             {
                 var occupied = active.FirstOrDefault(o => o.TableId == t.Id);
                 <button class="selection-card table-choice @(occupied != null ? "table-occupied" : "")" @onclick="() => ChooseTable(t)">
-                    <span class="status-badge @(occupied != null ? "status-occupied" : "status-available")">@(occupied == null ? "Available" : "Occupied")</span>
-                    <strong>Table @t.Number</strong><span>@t.Capacity seats</span><span class="choice-next">@(occupied == null ? "Start order →" : "Add to order →")</span>
+                    <span class="status-badge @(occupied != null ? "status-occupied" : "status-available")">@(occupied == null ? Text["Available"] : Text["Occupied"])</span>
+                    <strong>@Text["Table"] @t.Number</strong><span>@t.Capacity @Text["seats"]</span><span class="choice-next">@(occupied == null ? Text["Start order"] + " →" : Text["Add to order"] + " →")</span>
                 </button>
             }
         </div>
     }
     else if (step == OrderStep.Actions && existingBill != null)
     {
-        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>Continue an order</span></div>
+        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>@Text["Continue an order"]</span></div>
         @if ((existingBill.Payments?.Count ?? 0) > 0)
         {
-            <div class="notice">A payment has been recorded. Complete the remaining balance before closing this order.</div>
+            <div class="notice">@Text["A payment has been recorded. Complete the remaining balance before closing this order."]</div>
         }
         <div class="order-action-grid">
-            <button class="selection-card" disabled="@(busy || existingBill.Status == OrderStatus.Closed || (existingBill.Payments?.Count ?? 0) > 0)" @onclick="() => step = OrderStep.Food"><span class="choice-symbol" aria-hidden="true">+</span><strong>Add Item</strong><span>Choose food and add another kitchen ticket.</span></button>
-            <button class="selection-card" disabled="@(busy || existingBill.Status == OrderStatus.Closed || (existingBill.Payments?.Count ?? 0) > 0)" @onclick="() => step = OrderStep.Cancel"><span class="choice-symbol" aria-hidden="true">-</span><strong>Cancel Item</strong><span>Select items and quantities to cancel.</span></button>
+            <button class="selection-card" disabled="@(busy || existingBill.Status == OrderStatus.Closed || (existingBill.Payments?.Count ?? 0) > 0)" @onclick="() => step = OrderStep.Food"><span class="choice-symbol" aria-hidden="true">+</span><strong>@Text["Add Item"]</strong><span>@Text["Choose food and add another kitchen ticket."]</span></button>
+            <button class="selection-card" disabled="@(busy || existingBill.Status == OrderStatus.Closed || (existingBill.Payments?.Count ?? 0) > 0)" @onclick="() => step = OrderStep.Cancel"><span class="choice-symbol" aria-hidden="true">-</span><strong>@Text["Cancel Item"]</strong><span>@Text["Select items and quantities to cancel."]</span></button>
         </div>
-        <section class="current-order-panel"><div class="section-heading"><h2>Your order</h2><span>@existingBill.Items.Sum(i => i.Quantity) items</span></div>
+        <section class="current-order-panel"><div class="section-heading"><h2>@Text["Your order"]</h2><span>@existingBill.Items.Sum(i => i.Quantity) @Text["items"]</span></div>
             @foreach (var item in existingBill.Items)
             {
-                <div class="saved-order-line @(item.Quantity == 0 ? "cancelled-line" : "")"><strong>@item.Quantity &times; @item.Name</strong>@if (item.Quantity == 0) { <span>Cancelled</span> }@if (item.Notes.Length > 0) { <span>@item.Notes</span> }</div>
+                <div class="saved-order-line @(item.Quantity == 0 ? "cancelled-line" : "")"><strong>@item.Quantity &times; <ItemName Value="@item.Name" /></strong>@if (item.Quantity == 0) { <span>@Text["Cancelled"]</span> }@if (item.Notes.Length > 0) { <span>@item.Notes</span> }</div>
             }
         </section>
-        @if (existingBill.Status != OrderStatus.Closed) { <div class="order-checkout-actions"><a class="action checkout-order-button" href="@($"/cashier/{targetOrderId}")">@((existingBill.Payments?.Count ?? 0) > 0 ? "Continue payment" : "Checkout") &rarr;</a></div> }
+        @if (existingBill.Status != OrderStatus.Closed) { <div class="order-checkout-actions"><a class="action checkout-order-button" href="@($"/cashier/{targetOrderId}")">@((existingBill.Payments?.Count ?? 0) > 0 ? Text["Continue payment"] : Text["Checkout"]) &rarr;</a></div> }
     }
     else if (step == OrderStep.Cancel && existingBill != null)
     {
-        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>Cancel Item</span></div>
-        <p class="muted">Select the items to cancel. Quantities cannot exceed what remains in the order.</p>
+        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>@Text["Cancel Item"]</span></div>
+        <p class="muted">@Text["Select the items to cancel. Quantities cannot exceed what remains in the order."]</p>
         @foreach (var item in existingBill.Items.Where(i => i.Quantity > 0))
         {
             <div class="cancel-selection-row">
-                <label class="cancel-checkbox"><input type="checkbox" disabled="@busy" checked="@cancelSelections.ContainsKey(item.Id)" @onchange="e => SelectCancellation(item.Id, e.Value is true)" /><span><strong>@item.Name</strong><small>@item.Quantity remaining &middot; @item.Notes</small></span></label>
-                <div class="quantity-field"><span>Cancel quantity</span><QuantityInput Value="@cancelSelections.GetValueOrDefault(item.Id, 1)" ValueChanged="value => ChangeCancelQuantity(item.Id, item.Quantity, value.ToString())" Max="item.Quantity" Disabled="@(busy || !cancelSelections.ContainsKey(item.Id))" Label="Cancel quantity" /></div>
+                <label class="cancel-checkbox"><input type="checkbox" disabled="@busy" checked="@cancelSelections.ContainsKey(item.Id)" @onchange="e => SelectCancellation(item.Id, e.Value is true)" /><span><strong><ItemName Value="@item.Name" /></strong><small>@item.Quantity @Text["remaining"] &middot; @item.Notes</small></span></label>
+                <div class="quantity-field"><span>@Text["Cancel quantity"]</span><QuantityInput Value="@cancelSelections.GetValueOrDefault(item.Id, 1)" ValueChanged="value => ChangeCancelQuantity(item.Id, item.Quantity, value.ToString())" Max="item.Quantity" Disabled="@(busy || !cancelSelections.ContainsKey(item.Id))" Label="@Text["Cancel quantity"]" /></div>
             </div>
         }
-        <label>Cancellation reason (optional)<textarea maxlength="500" disabled="@busy" @bind="cancelReason" @bind:event="oninput" placeholder="Add a note for the kitchen if needed"></textarea></label>
-        <button disabled="@(busy || cancelSelections.Count == 0)" @onclick="SubmitCancellations">@(busy ? "Notifying kitchen..." : "Cancel selected items & notify kitchen")</button>
+        <label>@Text["Cancellation reason (optional)"]<textarea maxlength="500" disabled="@busy" @bind="cancelReason" @bind:event="oninput" placeholder="Add a note for the kitchen if needed"></textarea></label>
+        <button disabled="@(busy || cancelSelections.Count == 0)" @onclick="SubmitCancellations">@(busy ? Text["Notifying kitchen..."] : Text["Cancel selected items & notify kitchen"])</button>
     }
     else
     {
-        <div class="order-context"><strong>@destination @existingBill?.DisplayNumber</strong><span>@(targetOrderId.HasValue ? "Adding items to an existing order" : "New order")</span></div>
+        <div class="order-context"><strong>@destination @existingBill?.DisplayNumber</strong><span>@(targetOrderId.HasValue ? Text["Adding items to an existing order"] : Text["New order"])</span></div>
         <div class="ordering-layout">
             <section aria-label="Menu">
-                <label class="menu-search">Search food or drinks<input type="search" placeholder="Search the menu…" @bind="search" @bind:event="oninput" /></label>
+                <label class="menu-search">@Text["Search food or drinks"]<input type="search" placeholder="Search the menu…" @bind="search" @bind:event="oninput" /></label>
                 <div class="category-tabs" aria-label="Menu categories">
-                    <button class="category-tab @(categoryId == 0 ? "is-selected" : "")" aria-pressed="@(categoryId == 0 ? "true" : "false")" @onclick="() => categoryId = 0">All</button>
+                    <button class="category-tab @(categoryId == 0 ? "is-selected" : "")" aria-pressed="@(categoryId == 0 ? "true" : "false")" @onclick="() => categoryId = 0">@Text["All"]</button>
                     @foreach (var group in menu.GroupBy(m => m.CategoryId))
                     {
-                        <button class="category-tab @(categoryId == group.Key ? "is-selected" : "")" aria-pressed="@(categoryId == group.Key ? "true" : "false")" @onclick="() => categoryId = group.Key">@group.First().Category.Name</button>
+                        <button class="category-tab @(categoryId == group.Key ? "is-selected" : "")" aria-pressed="@(categoryId == group.Key ? "true" : "false")" @onclick="() => categoryId = group.Key">@Text[group.First().Category.Name]</button>
                     }
                 </div>
-                @if (!FilteredMenu.Any()) { <div class="empty-panel">No items match your search.</div> }
+                @if (!FilteredMenu.Any()) { <div class="empty-panel">@Text["No items match your search."]</div> }
                 @foreach (var group in FilteredMenu.GroupBy(m => m.CategoryId))
                 {
                     <section class="menu-category">
-                        <div class="section-heading"><h2>@group.First().Category.Name</h2><span>@group.Count() items</span></div>
+                        <div class="section-heading"><h2>@Text[group.First().Category.Name]</h2><span>@group.Count() @Text["items"]</span></div>
                         <div class="food-grid">
                             @foreach (var item in group)
                             {
                                 <button class="selection-card food-choice" disabled="@busy" @onclick="() => OpenPicker(item)">
-                                    <span class="food-initial" aria-hidden="true">@(string.IsNullOrWhiteSpace(item.Name) ? "?" : item.Name[..1])</span><strong>@item.Name</strong>
+                                    <span class="food-initial" aria-hidden="true">@(string.IsNullOrWhiteSpace(item.Name) ? "?" : item.Name[..1])</span><strong><ItemName Value="@item.Name" /></strong>
                                     @if (item.Description.Length > 0) { <span>@item.Description</span> }
-                                    <span class="food-choice-bottom"><strong>RM @item.Price.ToString("0.00")</strong><span>@(item.Variations.Count > 0 ? "Choose variation +" : "Customize +")</span></span>
+                                    <span class="food-choice-bottom"><strong>RM @item.Price.ToString("0.00")</strong><span>@((item.Variations.Count > 0 || item.OptionGroups.Count > 0) ? Text["Choose variation +"] : Text["Customize +"])</span></span>
                                 </button>
                             }
                         </div>
@@ -128,20 +128,20 @@
                 }
             </section>
             <aside class="order-cart" aria-label="Current order">
-                <div class="cart-heading"><h2>Your order</h2><span>@cart.Sum(x => x.Quantity) items</span></div>
-                @if (cart.Count == 0) { <div class="empty-cart"><span aria-hidden="true">＋</span><p>Something delicious starts here.</p><small>Select food to choose a variation and add it to your order.</small></div> }
+                <div class="cart-heading"><h2>@Text["Your order"]</h2><span>@cart.Sum(x => x.Quantity) @Text["items"]</span></div>
+                @if (cart.Count == 0) { <div class="empty-cart"><span aria-hidden="true">＋</span><p>@Text["Something delicious starts here."]</p><small>@Text["Select food to choose a variation and add it to your order."]</small></div> }
                 @foreach (var line in cart)
                 {
                     <div class="cart-line" @key="line">
-                        <div class="cart-line-heading"><strong>@line.MenuName</strong><button class="cart-remove-button" disabled="@busy" @onclick="() => cart.Remove(line)" aria-label="@($"Remove {line.MenuName} {line.VariationName}")">Remove</button></div>
-                        <span class="muted">@line.VariationName · RM @line.UnitPrice.ToString("0.00") each</span>
+                        <div class="cart-line-heading"><strong><ItemName Value="@($"{line.MenuName} ({line.VariationName})")" /></strong><button class="cart-remove-button" disabled="@busy" @onclick="() => cart.Remove(line)" aria-label="@($"Remove {line.MenuName} {line.VariationName}")">@Text["Remove"]</button></div>
+                        <span class="muted">RM @line.UnitPrice.ToString("0.00") each</span>
                         @if (line.Notes.Length > 0) { <p class="cart-notes">@line.Notes</p> }
-                        <div class="cart-quantity"><div class="quantity-field"><span>Quantity</span><QuantityInput @bind-Value="line.Quantity" Disabled="busy" /></div><strong>RM @((line.Quantity * line.UnitPrice).ToString("0.00"))</strong></div>
+                        <div class="cart-quantity"><div class="quantity-field"><span>@Text["Quantity"]</span><QuantityInput Label="@Text["Quantity"]" @bind-Value="line.Quantity" Disabled="busy" /></div><strong>RM @((line.Quantity * line.UnitPrice).ToString("0.00"))</strong></div>
                     </div>
                 }
-                @if (!targetOrderId.HasValue) { <label>Order notes<textarea maxlength="500" disabled="@busy" placeholder="Any instructions for the whole order?" @bind="notes"></textarea></label> }
-                <div class="cart-total"><span>New items total</span><strong>RM @cart.Sum(x => x.Quantity * x.UnitPrice).ToString("0.00")</strong></div>
-                <button class="submit-order" disabled="@(busy || cart.Count == 0)" @onclick="Submit">@(busy ? "Sending to kitchen…" : "Send to kitchen →")</button>
+                @if (!targetOrderId.HasValue) { <label>@Text["Order notes"]<textarea maxlength="500" disabled="@busy" placeholder="Any instructions for the whole order?" @bind="notes"></textarea></label> }
+                <div class="cart-total"><span>@Text["New items total"]</span><strong>RM @cart.Sum(x => x.Quantity * x.UnitPrice).ToString("0.00")</strong></div>
+                <button class="submit-order" disabled="@(busy || cart.Count == 0)" @onclick="Submit">@(busy ? Text["Sending to kitchen…"] : Text["Send to kitchen"] + " →")</button>
             </aside>
         </div>
     }
@@ -151,22 +151,36 @@
     <div class="picker-backdrop" @onclick="ClosePicker" @onkeydown="PickerKeyDown">
         <section class="item-picker" role="dialog" aria-modal="true" aria-labelledby="picker-title" tabindex="-1" @ref="picker" @onclick:stopPropagation="true">
             <form @onsubmit="AddToOrder" @onsubmit:preventDefault="true">
-                <div class="picker-heading"><div><p class="eyebrow">MAKE IT YOURS</p><h2 id="picker-title">@selected.Name</h2></div><button type="button" class="secondary-button" @onclick="ClosePicker" aria-label="Close food options">✕</button></div>
-                <p class="muted">Choose a variation, quantity, and any kitchen notes.</p>
-                <fieldset class="variation-fieldset"><legend>Variation</legend><div class="variation-grid">
+                <div class="picker-heading"><div><p class="eyebrow">@Text["MAKE IT YOURS"]</p><h2 id="picker-title">@selected.Name</h2></div><button type="button" class="secondary-button" @onclick="ClosePicker" aria-label="Close food options">✕</button></div>
+                <p class="muted">@Text["Choose a variation, quantity, and any kitchen notes."]</p>
+                @if (selected.OptionGroups.Count == 0)
+                {
+                <fieldset class="variation-fieldset"><legend>@Text["Variation"]</legend><div class="variation-grid">
                     @if (selected.Variations.Count == 0)
                     {
-                        <button type="button" class="variation-option is-selected" aria-pressed="true">Standard<strong>RM @selected.Price.ToString("0.00")</strong></button>
+                        <button type="button" class="variation-option is-selected" aria-pressed="true">@Text["Standard"]<strong>RM @selected.Price.ToString("0.00")</strong></button>
                     }
                     @foreach (var option in selected.Variations.OrderBy(x => x.SortOrder))
                     {
-                        <button type="button" class="variation-option @(selectedVariationId == option.Id ? "is-selected" : "")" aria-pressed="@(selectedVariationId == option.Id ? "true" : "false")" @onclick="() => selectedVariationId = option.Id">@option.Name<strong>RM @((selected.Price + option.AdditionalPrice).ToString("0.00"))</strong></button>
+                        <button type="button" class="variation-option @(selectedVariationId == option.Id ? "is-selected" : "")" aria-pressed="@(selectedVariationId == option.Id ? "true" : "false")" @onclick="() => selectedVariationId = option.Id">@Text[option.Name]<strong>RM @((selected.Price + option.AdditionalPrice).ToString("0.00"))</strong></button>
                     }
                 </div></fieldset>
-                <div class="quantity-field picker-quantity"><span>Quantity</span><QuantityInput @bind-Value="selectedQuantity" ButtonsOnRight="true" /></div>
-                <label>Kitchen notes<textarea maxlength="500" placeholder="For example: no chili, less sugar…" @bind="selectedNotes"></textarea></label>
+                }
+                @foreach (var group in selected.OptionGroups.OrderBy(g => g.SortOrder))
+                {
+                    <fieldset class="variation-fieldset menu-option-group" @key="group.Id"><legend>@group.Name</legend><div class="variation-grid">
+                        @foreach (var option in group.Options.OrderBy(o => o.SortOrder))
+                        {
+                            <button type="button" class="variation-option @(selectedOptions.GetValueOrDefault(group.Id) == option.Id ? "is-selected" : "")" aria-pressed="@(selectedOptions.GetValueOrDefault(group.Id) == option.Id ? "true" : "false")" @onclick="() => selectedOptions[group.Id] = option.Id">
+                                @option.Name@if (option.AdditionalPrice > 0) { <strong>+ RM @option.AdditionalPrice.ToString("0.00")</strong> }
+                            </button>
+                        }
+                    </div></fieldset>
+                }
+                <div class="quantity-field picker-quantity"><span>@Text["Quantity"]</span><QuantityInput Label="@Text["Quantity"]" @bind-Value="selectedQuantity" ButtonsOnRight="true" /></div>
+                <label>@Text["Kitchen notes"]<textarea maxlength="500" placeholder="For example: no chili, less sugar…" @bind="selectedNotes"></textarea></label>
                 @if (pickerError != null) { <p class="error" role="alert">@pickerError</p> }
-                <div class="picker-footer"><strong>RM @((PickerPrice * selectedQuantity).ToString("0.00"))</strong><button type="submit" disabled="@(selected.Variations.Count > 0 && !selectedVariationId.HasValue)">Add to order</button></div>
+                <div class="picker-footer"><strong>RM @((PickerPrice * selectedQuantity).ToString("0.00"))</strong><button type="submit" disabled="@(!PickerReady)">@Text["Add to order"]</button></div>
             </form>
         </section>
     </div>
@@ -182,7 +196,7 @@
     private OrderType type = OrderType.Takeaway;
     private int tableId, categoryId;
     private Guid? targetOrderId;
-    private string destination = "Take away", search = "", notes = "";
+    private string destination = "", search = "", notes = "";
     private bool busy, initialized;
     private Guid? loadedId;
     private string? error, success;
@@ -193,6 +207,7 @@
     private long version;
     private MenuItem? selected;
     private int? selectedVariationId;
+    private readonly Dictionary<int, int> selectedOptions = [];
     private int selectedQuantity = 1;
     private string selectedNotes = "";
     private string? pickerError;
@@ -221,7 +236,10 @@
     }
     public async ValueTask DisposeAsync() { disposed = true; Notifications.Changed -= OrderChanged; reconciliationStop.Cancel(); if (reconciliation != null) await reconciliation; reconciliationStop.Dispose(); }
     private IEnumerable<MenuItem> FilteredMenu => menu?.Where(m => (categoryId == 0 || m.CategoryId == categoryId) && m.Name.Contains(search, StringComparison.OrdinalIgnoreCase)) ?? [];
-    private decimal PickerPrice => (selected?.Price ?? 0m) + (selected?.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.AdditionalPrice ?? 0m);
+    private decimal PickerPrice => (selected?.Price ?? 0m) + (selected?.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.AdditionalPrice ?? 0m)
+        + (selected?.OptionGroups.SelectMany(g => g.Options).Where(o => selectedOptions.Values.Contains(o.Id)).Sum(o => o.AdditionalPrice) ?? 0m);
+    private bool PickerReady => selected != null && (selected.Variations.Count == 0 || selectedVariationId.HasValue)
+        && selected.OptionGroups.All(g => g.Options.Any(o => o.Id == selectedOptions.GetValueOrDefault(g.Id)));
     protected override async Task OnParametersSetAsync()
     {
         if (initialized && loadedId == Id) return;
@@ -241,7 +259,7 @@
             menu = await Service.Menu(); active = await Service.Active(); tables = await Service.Tables();
             if (targetOrderId.HasValue)
             {
-                existingBill = await Service.Bill(targetOrderId.Value); version = existingBill.Version; destination = existingBill.Destination;
+                existingBill = await Service.Bill(targetOrderId.Value); version = existingBill.Version; destination = Text.Destination(existingBill.Destination);
                 var current = active.FirstOrDefault(o => o.Id == targetOrderId);
                 if (current == null) throw new BusinessException("This order is no longer active.");
                 type = current.OrderType; tableId = current.TableId ?? 0;
@@ -254,11 +272,11 @@
     private void ChooseType(OrderType value)
     {
         type = value; targetOrderId = null; existingBill = null; tableId = 0; success = null;
-        destination = "Take away"; step = value == OrderType.Takeaway ? OrderStep.Food : OrderStep.Table;
+        destination = Text["Take away"]; step = value == OrderType.Takeaway ? OrderStep.Food : OrderStep.Table;
     }
     private async Task ChooseTable(DiningTable table)
     {
-        type = OrderType.DineIn; tableId = table.Id; destination = $"Table {table.Number}";
+        type = OrderType.DineIn; tableId = table.Id; destination = $"{Text["Table"]} {table.Number}";
         var existing = active.FirstOrDefault(o => o.TableId == table.Id);
         targetOrderId = existing?.Id; version = existing?.Version ?? 0; success = null;
         step = existing == null ? OrderStep.Food : OrderStep.Actions;
@@ -307,16 +325,28 @@
         catch { error = "Could not confirm cancellation. Retry the same selection or refresh to reconcile."; }
         finally { busy = false; }
     }
-    private void OpenPicker(MenuItem item) { selected = item; selectedVariationId = null; selectedQuantity = 1; selectedNotes = ""; pickerError = null; focusPicker = true; }
+    private void OpenPicker(MenuItem item)
+    {
+        selected = item; selectedVariationId = null; selectedOptions.Clear(); selectedQuantity = 1; selectedNotes = ""; pickerError = null; focusPicker = true;
+        foreach (var group in item.OptionGroups)
+        {
+            var option = group.Options.FirstOrDefault(o => o.IsDefault) ?? (group.Options.Count == 1 ? group.Options.Single() : null);
+            if (option != null) selectedOptions[group.Id] = option.Id;
+        }
+    }
     private void ClosePicker() => selected = null;
     private void PickerKeyDown(KeyboardEventArgs e) { if (e.Key == "Escape") ClosePicker(); }
     private void AddToOrder()
     {
         if (selected == null) return;
         if (selectedQuantity is < 1 or > 99 || selectedNotes.Length > 500) { pickerError = "Choose a quantity from 1 to 99 and notes up to 500 characters."; return; }
-        if (selected.Variations.Count > 0 && !selectedVariationId.HasValue) { pickerError = "Choose a variation first."; return; }
+        if (!PickerReady) { pickerError = Text["Choose an option in each group."]; return; }
         if (cart.Count >= 100) { pickerError = "Send this batch before adding more items (maximum 100 lines)."; return; }
-        cart.Add(new() { MenuItemId = selected.Id, MenuName = selected.Name, VariationId = selectedVariationId, VariationName = selected.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.Name ?? "Standard", UnitPrice = PickerPrice, Quantity = selectedQuantity, Notes = selectedNotes.Trim() });
+        var options = selected.OptionGroups.OrderBy(g => g.SortOrder).Select(g => $"{g.Name}：{g.Options.Single(o => o.Id == selectedOptions[g.Id]).Name}").ToList();
+        cart.Add(new() { MenuItemId = selected.Id, MenuName = selected.Name, VariationId = selectedVariationId,
+            OptionIds = selectedOptions.Values.Order().ToList(),
+            VariationName = options.Count > 0 ? string.Join("，", options) : selected.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.Name ?? (selected.Category.IsBeverage ? "Standard" : "标准"),
+            UnitPrice = PickerPrice, Quantity = selectedQuantity, Notes = selectedNotes.Trim() });
         selected = null;
     }
     private async Task Submit()
@@ -328,7 +358,7 @@
             var user = (await Authentication.GetAuthenticationStateAsync()).User;
             if (!(user.IsInRole("Admin") || user.IsInRole("Waiter"))) throw new BusinessException("Not authorized", 403);
             if (cart.Any(x => x.Quantity is < 1 or > 99)) throw new BusinessException("Quantities must be from 1 to 99.", 400);
-            var items = cart.Select(x => new ItemInput(x.MenuItemId, x.Quantity, x.Notes, x.VariationId)).ToList();
+            var items = cart.Select(x => new ItemInput(x.MenuItemId, x.Quantity, x.Notes, x.VariationId, x.OptionIds)).ToList();
             Guid id;
             if (targetOrderId.HasValue) id = await Service.Add(targetOrderId.Value, new(version, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             else id = await Service.Create(new(type, type == OrderType.DineIn ? tableId : null, notes, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -347,6 +377,7 @@
         public int MenuItemId { get; init; }
         public string MenuName { get; init; } = "";
         public int? VariationId { get; init; }
+        public List<int> OptionIds { get; init; } = [];
         public string VariationName { get; init; } = "";
         public decimal UnitPrice { get; init; }
         public int Quantity { get; set; }

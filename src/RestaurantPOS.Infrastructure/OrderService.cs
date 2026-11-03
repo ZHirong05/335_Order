@@ -10,15 +10,22 @@ namespace RestaurantPOS.Infrastructure;
 public interface IBusinessEvents { Task Publish(BusinessEvent notification); }
 public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEvents events, TimeProvider? clock = null)
 {
-    public async Task<List<MenuItem>> Menu() { await using var db = await factory.CreateDbContextAsync(); return await db.Menu.AsNoTracking().Include(x => x.Category).Include(x => x.Variations.Where(v => v.IsAvailable)).Where(x => x.IsAvailable && x.Category.IsActive).OrderBy(x => x.Category.SortOrder).ThenBy(x => x.SortOrder).ThenBy(x => x.Name).ToListAsync(); }
+    public async Task<List<MenuItem>> Menu() { await using var db = await factory.CreateDbContextAsync(); return await db.Menu.AsNoTracking().AsSplitQuery().Include(x => x.Category).Include(x => x.Variations.Where(v => v.IsAvailable)).Include(x => x.OptionGroups.OrderBy(g => g.SortOrder)).ThenInclude(g => g.Options.Where(o => o.IsAvailable)).Where(x => x.IsAvailable && x.Category.IsActive).OrderBy(x => x.Category.SortOrder).ThenBy(x => x.SortOrder).ThenBy(x => x.Name).ToListAsync(); }
     public async Task<List<DiningTable>> Tables() { await using var db = await factory.CreateDbContextAsync(); return await db.Tables.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Number).ToListAsync(); }
     public async Task<List<Order>> Active() { await using var db = await factory.CreateDbContextAsync(); return await db.Orders.AsNoTracking().Include(x => x.Table).Include(x => x.Items).Where(x => x.Status != OrderStatus.Closed).OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id).ToListAsync(); }
     public async Task<List<Order>> CashierOrders()
     {
+        var zone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Kuala_Lumpur");
+        var local = TimeZoneInfo.ConvertTime((clock ?? TimeProvider.System).GetUtcNow(), zone);
+        var from = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local.Date, DateTimeKind.Unspecified), zone);
+        var until = from.AddDays(1);
         await using var db = await factory.CreateDbContextAsync();
         return await db.Orders.AsNoTracking().Include(x => x.Table).Include(x => x.Items)
             .Where(x => x.Status == OrderStatus.Closed)
-            .OrderByDescending(x => db.Payments.Where(p => p.OrderId == x.Id).Max(p => (DateTime?)p.ReceivedAtUtc) ?? x.UpdatedAtUtc).ThenByDescending(x => x.Id).ToListAsync();
+            .Select(x => new { Order = x, SettledAt = db.Events.Where(e => e.OrderId == x.Id && e.EventType == "OrderClosed").Max(e => (DateTime?)e.CreatedAtUtc)
+                ?? db.Payments.Where(p => p.OrderId == x.Id).Max(p => (DateTime?)p.ReceivedAtUtc) ?? x.UpdatedAtUtc })
+            .Where(x => x.SettledAt >= from && x.SettledAt < until)
+            .OrderByDescending(x => x.SettledAt).ThenByDescending(x => x.Order.Id).Select(x => x.Order).ToListAsync();
     }
     public async Task<Bill> Bill(Guid id)
     {
@@ -187,12 +194,22 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
         foreach (var input in items)
         {
             if (input.Quantity is < 1 or > 99 || (input.Notes ?? "").Length > 500) throw new BusinessException("Invalid quantity or notes", 400);
-            var menu = await db.Menu.Include(x => x.Category).SingleOrDefaultAsync(x => x.Id == input.MenuItemId && x.IsAvailable && x.Category.IsActive) ?? throw new BusinessException("Menu item unavailable");
+            var menu = await db.Menu.AsSplitQuery().Include(x => x.Category).Include(x => x.OptionGroups).ThenInclude(g => g.Options)
+                .SingleOrDefaultAsync(x => x.Id == input.MenuItemId && x.IsAvailable && x.Category.IsActive) ?? throw new BusinessException("Menu item unavailable");
             MenuItemVariation? variation = null;
             if (input.VariationId.HasValue)
                 variation = await db.MenuVariations.SingleOrDefaultAsync(v => v.Id == input.VariationId && v.MenuItemId == menu.Id && v.IsAvailable)
                     ?? throw new BusinessException("Variation unavailable for this item", 400);
-            var item = new OrderItem { OrderId = o.Id, MenuItemId = menu.Id, ItemNameSnapshot = variation == null ? menu.Name : $"{menu.Name} ({variation.Name})", UnitPriceSnapshot = menu.Price + (variation?.AdditionalPrice ?? 0m), Quantity = input.Quantity, Notes = input.Notes ?? "" };
+            var ids = input.OptionIds ?? [];
+            if (ids.Count > 20 || ids.Distinct().Count() != ids.Count || (menu.OptionGroups.Count > 0 && input.VariationId.HasValue))
+                throw new BusinessException("Choose one option from each selection group", 400);
+            var chosen = menu.OptionGroups.OrderBy(g => g.SortOrder).SelectMany(g => g.Options.Where(x => ids.Contains(x.Id))).ToList();
+            if (chosen.Count != ids.Count || chosen.Any(x => !x.IsAvailable) || menu.OptionGroups.Any(g => chosen.Count(x => x.MenuOptionGroupId == g.Id) != 1))
+                throw new BusinessException("Choose one available option from each selection group", 400);
+            var optionNames = menu.OptionGroups.OrderBy(g => g.SortOrder).Select(g => $"{g.Name}：{chosen.Single(x => x.MenuOptionGroupId == g.Id).Name}").ToList();
+            var name = optionNames.Count > 0 ? $"{menu.Name}（{string.Join("，", optionNames)}）" : variation == null ? menu.Name : $"{menu.Name} ({variation.Name})";
+            var unitPrice = menu.Price + (variation?.AdditionalPrice ?? 0m) + chosen.Sum(x => x.AdditionalPrice);
+            var item = new OrderItem { OrderId = o.Id, MenuItemId = menu.Id, ItemNameSnapshot = name, UnitPriceSnapshot = unitPrice, Quantity = input.Quantity, Notes = input.Notes ?? "" };
             db.OrderItems.Add(item);
             ticket.Items.Add(new KitchenTicketItem { OrderItemId = item.Id, Quantity = item.Quantity, NotesSnapshot = item.Notes });
         }

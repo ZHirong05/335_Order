@@ -1,0 +1,3659 @@
+{
+  "Version": "book1-2026-11-v2",
+  "SourceSha256": "d9fd7d0b5a96979015e4d3f72d3d2e82d12363c4d812c49c8f91448ad14f7223",
+  "Categories": [
+    {
+      "Name": "粉面类",
+      "IsBeverage": false,
+      "Items": [
+        {
+          "Name": "咖喱面",
+          "Price": 9.5,
+          "SourceRows": [
+            "食品!8",
+            "食品!9",
+            "食品!10",
+            "食品!11",
+            "食品!12",
+            "食品!13",
+            "食品!14",
+            "食品!15",
+            "食品!16",
+            "食品!17",
+            "食品!18",
+            "食品!19"
+          ],
+          "Groups": [
+            {
+              "Name": "面类",
+              "Options": [
+                {
+                  "Name": "面",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "米粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "河粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "生面",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            },
+            {
+              "Name": "+",
+              "Options": [
+                {
+                  "Name": "鸡肉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "叉烧",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "花肉",
+                  "AdditionalPrice": 2.0
+                },
+                {
+                  "Name": "虾水饺（2粒）",
+                  "AdditionalPrice": 3.0
+                },
+                {
+                  "Name": "虾",
+                  "AdditionalPrice": 3.0
+                },
+                {
+                  "Name": "烧肉",
+                  "AdditionalPrice": 3.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "虾汤面",
+          "Price": 9.5,
+          "SourceRows": [
+            "食品!21",
+            "食品!22",
+            "食品!23",
+            "食品!24",
+            "食品!25",
+            "食品!26",
+            "食品!27",
+            "食品!28",
+            "食品!29",
+            "食品!30"
+          ],
+          "Groups": [
+            {
+              "Name": "面类",
+              "Options": [
+                {
+                  "Name": "面",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "米粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "河粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "生面",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            },
+            {
+              "Name": "+",
+              "Options": [
+                {
+                  "Name": "虾",
+                  "AdditionalPrice": 0.0,
+                  "IsDefault": true
+                },
+                {
+                  "Name": "叉烧",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "花肉",
+                  "AdditionalPrice": 2.0
+                },
+                {
+                  "Name": "水饺（2粒）",
+                  "AdditionalPrice": 3.0
+                },
+                {
+                  "Name": "烧肉",
+                  "AdditionalPrice": 3.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "叉烧云吞面",
+          "Price": 8.5,
+          "SourceRows": [
+            "食品!32"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "卤花肉面",
+          "Price": 10.0,
+          "SourceRows": [
+            "食品!33",
+            "食品!34"
+          ],
+          "Groups": [
+            {
+              "Name": "面类",
+              "Options": [
+                {
+                  "Name": "面",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "米粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "河粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "生面",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            },
+            {
+              "Name": "做法",
+              "Options": [
+                {
+                  "Name": "干",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "汤",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "冬菇凤爪面（3份）",
+          "Price": 10.0,
+          "SourceRows": [
+            "食品!35",
+            "食品!36"
+          ],
+          "Groups": [
+            {
+              "Name": "面类",
+              "Options": [
+                {
+                  "Name": "面",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "米粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "河粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "生面",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            },
+            {
+              "Name": "做法",
+              "Options": [
+                {
+                  "Name": "干",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "汤",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "虾水饺面",
+          "Price": 10.5,
+          "SourceRows": [
+            "食品!38",
+            "食品!39"
+          ],
+          "Groups": [
+            {
+              "Name": "面类",
+              "Options": [
+                {
+                  "Name": "面",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "米粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "河粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "生面",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            },
+            {
+              "Name": "做法",
+              "Options": [
+                {
+                  "Name": "干",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "汤",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "客家面",
+          "Price": 10.5,
+          "SourceRows": [
+            "食品!40",
+            "食品!41"
+          ],
+          "Groups": [
+            {
+              "Name": "面类",
+              "Options": [
+                {
+                  "Name": "面",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "米粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "河粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "生面",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "鱼丸汤粉",
+          "Price": 7.5,
+          "SourceRows": [
+            "食品!44",
+            "食品!45",
+            "食品!46"
+          ],
+          "Groups": [
+            {
+              "Name": "面类",
+              "Options": [
+                {
+                  "Name": "河粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "米粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "面",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            },
+            {
+              "Name": "+",
+              "Options": [
+                {
+                  "Name": "鸡丝",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "鸡丝虾",
+                  "AdditionalPrice": 2.5
+                },
+                {
+                  "Name": "叉烧",
+                  "AdditionalPrice": 1.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "清汤白斩鸡腿面",
+          "Price": 12.0,
+          "SourceRows": [
+            "食品!75",
+            "食品!76"
+          ],
+          "Groups": [
+            {
+              "Name": "面类",
+              "Options": [
+                {
+                  "Name": "河粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "生面",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "饭类",
+      "IsBeverage": false,
+      "Items": [
+        {
+          "Name": "咖喱鸡饭",
+          "Price": 8.5,
+          "SourceRows": [
+            "食品!59"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "卤花肉蛋饭配菜",
+          "Price": 11.0,
+          "SourceRows": [
+            "食品!61"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "咖喱鸡椰浆饭",
+          "Price": 10.0,
+          "SourceRows": [
+            "食品!62"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "鸡扒炒饭配荷包蛋",
+          "Price": 17.0,
+          "SourceRows": [
+            "食品!63"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "黑胡椒汁鸡扒饭",
+          "Price": 12.0,
+          "SourceRows": [
+            "食品!64"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "白斩鸡腿饭配菜",
+          "Price": 13.0,
+          "SourceRows": [
+            "食品!77"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "炸鸡腿椰浆饭配煎蛋",
+          "Price": 17.0,
+          "SourceRows": [
+            "食品!78"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "炒饭",
+          "Price": 8.5,
+          "SourceRows": [
+            "食品!65",
+            "食品!66",
+            "食品!67",
+            "食品!68",
+            "食品!69",
+            "食品!70"
+          ],
+          "Groups": [
+            {
+              "Name": "+",
+              "Options": [
+                {
+                  "Name": "鸡肉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "叉烧",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "蔬菜",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "烧肉",
+                  "AdditionalPrice": 4.0
+                },
+                {
+                  "Name": "虾",
+                  "AdditionalPrice": 4.0
+                }
+              ]
+            },
+            {
+              "Name": "荷包蛋",
+              "Options": [
+                {
+                  "Name": "不加蛋",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "加荷包蛋",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "炒粉面",
+      "IsBeverage": false,
+      "Items": [
+        {
+          "Name": "炒面",
+          "Price": 8.5,
+          "SourceRows": [
+            "食品!69",
+            "食品!70",
+            "食品!71",
+            "食品!72"
+          ],
+          "Groups": [
+            {
+              "Name": "面类",
+              "Options": [
+                {
+                  "Name": "面",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "河粉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "米粉",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            },
+            {
+              "Name": "+",
+              "Options": [
+                {
+                  "Name": "鸡肉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "叉烧",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "烧肉",
+                  "AdditionalPrice": 4.0
+                },
+                {
+                  "Name": "虾",
+                  "AdditionalPrice": 4.0
+                }
+              ]
+            },
+            {
+              "Name": "荷包蛋",
+              "Options": [
+                {
+                  "Name": "不加蛋",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "加荷包蛋",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "小吃与汤类",
+      "IsBeverage": false,
+      "Items": [
+        {
+          "Name": "冬菇凤爪",
+          "Price": 6.0,
+          "SourceRows": [
+            "食品!37"
+          ],
+          "Groups": [
+            {
+              "Name": "份量",
+              "Options": [
+                {
+                  "Name": "3份",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "4份",
+                  "AdditionalPrice": 2.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "卤花肉加蛋",
+          "Price": 8.0,
+          "SourceRows": [
+            "食品!60"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "云吞",
+          "Price": 9.0,
+          "SourceRows": [
+            "食品!51"
+          ],
+          "Groups": [
+            {
+              "Name": "做法",
+              "Options": [
+                {
+                  "Name": "炸",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "汤",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "招牌豆腐（8粒）",
+          "Price": 10.0,
+          "SourceRows": [
+            "食品!52"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "虾水饺（4粒）",
+          "Price": 10.0,
+          "SourceRows": [
+            "食品!52"
+          ],
+          "Groups": [
+            {
+              "Name": "做法",
+              "Options": [
+                {
+                  "Name": "炸",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "汤",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "葱油蔬菜",
+          "Price": 5.0,
+          "SourceRows": [
+            "食品!54"
+          ],
+          "Groups": [
+            {
+              "Name": "菜类",
+              "Options": [
+                {
+                  "Name": "小白菜",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "豆芽",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "菜心",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "鱼丸汤",
+          "Price": 5.0,
+          "SourceRows": [
+            "食品!55"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "煎荷包蛋",
+          "Price": 1.5,
+          "SourceRows": [
+            "食品!56"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "鸡排／白斩鸡／炸鸡腿",
+          "Price": 8.0,
+          "SourceRows": [
+            "食品!79"
+          ],
+          "Groups": [
+            {
+              "Name": "肉类",
+              "Options": [
+                {
+                  "Name": "炸鸡排肉",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "白斩鸡",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "炸鸡腿",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "咖喱鸡肉",
+          "Price": 6.0,
+          "SourceRows": [
+            "食品!53"
+          ],
+          "Groups": [
+            {
+              "Name": "份量",
+              "Options": [
+                {
+                  "Name": "小份",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "大份",
+                  "AdditionalPrice": 6.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "加料",
+      "IsBeverage": false,
+      "Items": [
+        {
+          "Name": "叉烧",
+          "Price": 4.0,
+          "SourceRows": [
+            "食品!C47"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "咖喱鸡",
+          "Price": 4.0,
+          "SourceRows": [
+            "食品!C47"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "卤花肉",
+          "Price": 5.0,
+          "SourceRows": [
+            "食品!L48"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "虾",
+          "Price": 5.0,
+          "SourceRows": [
+            "食品!L48"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "烧肉",
+          "Price": 8.0,
+          "SourceRows": [
+            "食品!I49"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "加面（大份）",
+          "Price": 3.0,
+          "SourceRows": [
+            "食品!C49"
+          ],
+          "Groups": []
+        },
+        {
+          "Name": "加生面",
+          "Price": 3.0,
+          "SourceRows": [
+            "食品!50"
+          ],
+          "Groups": [
+            {
+              "Name": "份量",
+              "Options": [
+                {
+                  "Name": "普通份",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "大份",
+                  "AdditionalPrice": 2.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "早点",
+      "IsBeverage": false,
+      "Items": [
+        {
+          "Name": "烧面包",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!40",
+            "饮料!41"
+          ],
+          "Groups": [
+            {
+              "Name": "份量",
+              "Options": [
+                {
+                  "Name": "半份",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "一份",
+                  "AdditionalPrice": 2.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "甘榜鸡蛋",
+          "Price": 2.0,
+          "SourceRows": [
+            "饮料!40",
+            "饮料!41"
+          ],
+          "Groups": [
+            {
+              "Name": "数量",
+              "Options": [
+                {
+                  "Name": "1粒",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "2粒",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "Coffee",
+      "IsBeverage": true,
+      "Items": [
+        {
+          "Name": "Kopi",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!3"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Kopi-O",
+          "Price": 2.0,
+          "SourceRows": [
+            "饮料!4"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Kopi-O Kosong",
+          "Price": 2.0,
+          "SourceRows": [
+            "饮料!5"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Kopi-C",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!8"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Nescafe",
+          "Price": 3.0,
+          "SourceRows": [
+            "饮料!18"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 2.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Nescafe-O",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!19"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Nescafe C Kosong",
+          "Price": 3.0,
+          "SourceRows": [
+            "饮料!20"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 2.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "White Coffee",
+          "Price": 4.5,
+          "SourceRows": [
+            "饮料!21"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "Tea",
+      "IsBeverage": true,
+      "Items": [
+        {
+          "Name": "Teh",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!6"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Teh-O",
+          "Price": 2.0,
+          "SourceRows": [
+            "饮料!7"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Teh-C",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!8"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Teh-O Kosong",
+          "Price": 2.0,
+          "SourceRows": [
+            "饮料!9"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Teh-O Lemon",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!10"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 2.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Ais Lemon Tea",
+          "Price": 4.5,
+          "SourceRows": [
+            "饮料!12"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Lemon",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!13"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 2.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Green Tea",
+          "Price": 1.5,
+          "SourceRows": [
+            "饮料!23"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Green Tea Lemon",
+          "Price": 3.0,
+          "SourceRows": [
+            "饮料!24"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Honey Lemon",
+          "Price": 4.5,
+          "SourceRows": [
+            "饮料!25"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Big",
+                  "AdditionalPrice": 3.5
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Chinese Tea",
+          "Price": 0.5,
+          "SourceRows": [
+            "饮料!29"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Big",
+                  "AdditionalPrice": 0.5
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 0.7
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "Malt & Mixed Drinks",
+      "IsBeverage": true,
+      "Items": [
+        {
+          "Name": "Kopi Teh Mix",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!11"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Milo",
+          "Price": 3.0,
+          "SourceRows": [
+            "饮料!14"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 2.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Milo-O",
+          "Price": 2.5,
+          "SourceRows": [
+            "饮料!15"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Milo C Kosong",
+          "Price": 3.0,
+          "SourceRows": [
+            "饮料!16"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 1.5
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 2.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Milo Dinosaur Ais",
+          "Price": 5.0,
+          "SourceRows": [
+            "饮料!17"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Neslo",
+          "Price": 3.0,
+          "SourceRows": [
+            "饮料!22"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Hot",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 2.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 2.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 3.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "Soft Drinks",
+      "IsBeverage": true,
+      "Items": [
+        {
+          "Name": "Canned Soft Drinks",
+          "Price": 3.0,
+          "SourceRows": [
+            "饮料!26"
+          ],
+          "Groups": [
+            {
+              "Name": "Flavour",
+              "Options": [
+                {
+                  "Name": "100 Plus",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Coke",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            },
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Can",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Winter Melon Barli",
+          "Price": 3.0,
+          "SourceRows": [
+            "饮料!27"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Big",
+                  "AdditionalPrice": 2.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Winter Melon Barli Lemon",
+          "Price": 4.0,
+          "SourceRows": [
+            "饮料!28"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Big",
+                  "AdditionalPrice": 3.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Plain Water",
+          "Price": 0.5,
+          "SourceRows": [
+            "饮料!30"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Glass",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Jia Duo Bao Tea",
+          "Price": 4.5,
+          "SourceRows": [
+            "饮料!32"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Can",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Mineral Water",
+          "Price": 1.5,
+          "SourceRows": [
+            "饮料!31"
+          ],
+          "Groups": [
+            {
+              "Name": "Size",
+              "Options": [
+                {
+                  "Name": "Small",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Big",
+                  "AdditionalPrice": 1.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "Fruit Juice",
+      "IsBeverage": true,
+      "Items": [
+        {
+          "Name": "Lime Juice with Jelly",
+          "Price": 5.0,
+          "SourceRows": [
+            "饮料!34"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Big",
+                  "AdditionalPrice": 3.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Fruit Juice",
+          "Price": 4.5,
+          "SourceRows": [
+            "饮料!35"
+          ],
+          "Groups": [
+            {
+              "Name": "Fruit",
+              "Options": [
+                {
+                  "Name": "Orange",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Apple",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Carrot",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            },
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Big",
+                  "AdditionalPrice": 3.5
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Carrot Milk",
+          "Price": 5.0,
+          "SourceRows": [
+            "饮料!36"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Cold",
+                  "AdditionalPrice": 0.0
+                },
+                {
+                  "Name": "Big",
+                  "AdditionalPrice": 4.0
+                },
+                {
+                  "Name": "Take away",
+                  "AdditionalPrice": 1.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "Beer",
+      "IsBeverage": true,
+      "Items": [
+        {
+          "Name": "Tiger Beer",
+          "Price": 11.0,
+          "SourceRows": [
+            "饮料!37"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Can",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Carlsberg Beer",
+          "Price": 11.0,
+          "SourceRows": [
+            "饮料!38"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Can",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Name": "Guinness Stout Beer",
+          "Price": 12.0,
+          "SourceRows": [
+            "饮料!39"
+          ],
+          "Groups": [
+            {
+              "Name": "Serving",
+              "Options": [
+                {
+                  "Name": "Can",
+                  "AdditionalPrice": 0.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "PriceChecks": [
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L8",
+      "Price": 9.5,
+      "Options": [
+        "面",
+        "鸡肉"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L9",
+      "Price": 10.0,
+      "Options": [
+        "生面",
+        "鸡肉"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L10",
+      "Price": 10.5,
+      "Options": [
+        "面",
+        "叉烧"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L11",
+      "Price": 11.0,
+      "Options": [
+        "生面",
+        "叉烧"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L12",
+      "Price": 11.5,
+      "Options": [
+        "面",
+        "花肉"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L13",
+      "Price": 12.0,
+      "Options": [
+        "生面",
+        "花肉"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L14",
+      "Price": 12.5,
+      "Options": [
+        "面",
+        "虾水饺（2粒）"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L15",
+      "Price": 13.0,
+      "Options": [
+        "生面",
+        "虾水饺（2粒）"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L16",
+      "Price": 12.5,
+      "Options": [
+        "面",
+        "虾"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L17",
+      "Price": 13.0,
+      "Options": [
+        "生面",
+        "虾"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L18",
+      "Price": 13.0,
+      "Options": [
+        "面",
+        "烧肉"
+      ]
+    },
+    {
+      "Item": "咖喱面",
+      "Source": "食品!L19",
+      "Price": 13.5,
+      "Options": [
+        "生面",
+        "烧肉"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L21",
+      "Price": 9.5,
+      "Options": [
+        "面",
+        "虾"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L22",
+      "Price": 10.0,
+      "Options": [
+        "生面",
+        "虾"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L23",
+      "Price": 10.5,
+      "Options": [
+        "面",
+        "叉烧"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L24",
+      "Price": 11.0,
+      "Options": [
+        "生面",
+        "叉烧"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L25",
+      "Price": 11.5,
+      "Options": [
+        "面",
+        "花肉"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L26",
+      "Price": 12.0,
+      "Options": [
+        "生面",
+        "花肉"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L27",
+      "Price": 12.5,
+      "Options": [
+        "面",
+        "水饺（2粒）"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L28",
+      "Price": 13.0,
+      "Options": [
+        "生面",
+        "水饺（2粒）"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L29",
+      "Price": 13.0,
+      "Options": [
+        "面",
+        "烧肉"
+      ]
+    },
+    {
+      "Item": "虾汤面",
+      "Source": "食品!L30",
+      "Price": 13.5,
+      "Options": [
+        "生面",
+        "烧肉"
+      ]
+    },
+    {
+      "Item": "叉烧云吞面",
+      "Source": "食品!L32",
+      "Price": 8.5,
+      "Options": []
+    },
+    {
+      "Item": "卤花肉面",
+      "Source": "食品!L33",
+      "Price": 10.0,
+      "Options": [
+        "面",
+        "干"
+      ]
+    },
+    {
+      "Item": "卤花肉面",
+      "Source": "食品!L34",
+      "Price": 10.5,
+      "Options": [
+        "生面",
+        "干"
+      ]
+    },
+    {
+      "Item": "冬菇凤爪面（3份）",
+      "Source": "食品!L35",
+      "Price": 10.0,
+      "Options": [
+        "面",
+        "干"
+      ]
+    },
+    {
+      "Item": "冬菇凤爪面（3份）",
+      "Source": "食品!L36",
+      "Price": 10.5,
+      "Options": [
+        "生面",
+        "干"
+      ]
+    },
+    {
+      "Item": "虾水饺面",
+      "Source": "食品!L38",
+      "Price": 10.5,
+      "Options": [
+        "面",
+        "干"
+      ]
+    },
+    {
+      "Item": "虾水饺面",
+      "Source": "食品!L39",
+      "Price": 11.0,
+      "Options": [
+        "生面",
+        "干"
+      ]
+    },
+    {
+      "Item": "客家面",
+      "Source": "食品!L40",
+      "Price": 10.5,
+      "Options": [
+        "面"
+      ]
+    },
+    {
+      "Item": "客家面",
+      "Source": "食品!L41",
+      "Price": 11.0,
+      "Options": [
+        "生面"
+      ]
+    },
+    {
+      "Item": "鱼丸汤粉",
+      "Source": "食品!L44",
+      "Price": 7.5,
+      "Options": [
+        "河粉",
+        "鸡丝"
+      ]
+    },
+    {
+      "Item": "鱼丸汤粉",
+      "Source": "食品!L45",
+      "Price": 10.0,
+      "Options": [
+        "河粉",
+        "鸡丝虾"
+      ]
+    },
+    {
+      "Item": "鱼丸汤粉",
+      "Source": "食品!L46",
+      "Price": 8.5,
+      "Options": [
+        "河粉",
+        "叉烧"
+      ]
+    },
+    {
+      "Item": "清汤白斩鸡腿面",
+      "Source": "食品!L75",
+      "Price": 12.0,
+      "Options": [
+        "河粉"
+      ]
+    },
+    {
+      "Item": "清汤白斩鸡腿面",
+      "Source": "食品!L76",
+      "Price": 12.5,
+      "Options": [
+        "生面"
+      ]
+    },
+    {
+      "Item": "咖喱鸡饭",
+      "Source": "食品!L59",
+      "Price": 8.5,
+      "Options": []
+    },
+    {
+      "Item": "卤花肉蛋饭配菜",
+      "Source": "食品!L61",
+      "Price": 11.0,
+      "Options": []
+    },
+    {
+      "Item": "咖喱鸡椰浆饭",
+      "Source": "食品!L62",
+      "Price": 10.0,
+      "Options": []
+    },
+    {
+      "Item": "鸡扒炒饭配荷包蛋",
+      "Source": "食品!L63",
+      "Price": 17.0,
+      "Options": []
+    },
+    {
+      "Item": "黑胡椒汁鸡扒饭",
+      "Source": "食品!L64",
+      "Price": 12.0,
+      "Options": []
+    },
+    {
+      "Item": "白斩鸡腿饭配菜",
+      "Source": "食品!L77",
+      "Price": 13.0,
+      "Options": []
+    },
+    {
+      "Item": "炸鸡腿椰浆饭配煎蛋",
+      "Source": "食品!L78",
+      "Price": 17.0,
+      "Options": []
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L65",
+      "Price": 8.5,
+      "Options": [
+        "鸡肉",
+        "不加蛋"
+      ]
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L66",
+      "Price": 10.0,
+      "Options": [
+        "鸡肉",
+        "加荷包蛋"
+      ]
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L67",
+      "Price": 10.0,
+      "Options": [
+        "叉烧",
+        "不加蛋"
+      ]
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L68",
+      "Price": 11.5,
+      "Options": [
+        "叉烧",
+        "加荷包蛋"
+      ]
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L67",
+      "Price": 10.0,
+      "Options": [
+        "蔬菜",
+        "不加蛋"
+      ]
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L68",
+      "Price": 11.5,
+      "Options": [
+        "蔬菜",
+        "加荷包蛋"
+      ]
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L69",
+      "Price": 12.5,
+      "Options": [
+        "烧肉",
+        "不加蛋"
+      ]
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L70",
+      "Price": 14.0,
+      "Options": [
+        "烧肉",
+        "加荷包蛋"
+      ]
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L69",
+      "Price": 12.5,
+      "Options": [
+        "虾",
+        "不加蛋"
+      ]
+    },
+    {
+      "Item": "炒饭",
+      "Source": "食品!L70",
+      "Price": 14.0,
+      "Options": [
+        "虾",
+        "加荷包蛋"
+      ]
+    },
+    {
+      "Item": "炒面",
+      "Source": "食品!L71",
+      "Price": 8.5,
+      "Options": [
+        "面",
+        "鸡肉",
+        "不加蛋"
+      ]
+    },
+    {
+      "Item": "炒面",
+      "Source": "食品!L72",
+      "Price": 10.0,
+      "Options": [
+        "面",
+        "叉烧",
+        "不加蛋"
+      ]
+    },
+    {
+      "Item": "炒面",
+      "Source": "食品!L69",
+      "Price": 12.5,
+      "Options": [
+        "面",
+        "烧肉",
+        "不加蛋"
+      ]
+    },
+    {
+      "Item": "炒面",
+      "Source": "食品!L69",
+      "Price": 12.5,
+      "Options": [
+        "面",
+        "虾",
+        "不加蛋"
+      ]
+    },
+    {
+      "Item": "炒面",
+      "Source": "食品!L70",
+      "Price": 14.0,
+      "Options": [
+        "面",
+        "烧肉",
+        "加荷包蛋"
+      ]
+    },
+    {
+      "Item": "炒面",
+      "Source": "食品!L70",
+      "Price": 14.0,
+      "Options": [
+        "面",
+        "虾",
+        "加荷包蛋"
+      ]
+    },
+    {
+      "Item": "冬菇凤爪",
+      "Source": "食品!C37",
+      "Price": 6.0,
+      "Options": [
+        "3份"
+      ]
+    },
+    {
+      "Item": "冬菇凤爪",
+      "Source": "食品!C37",
+      "Price": 8.0,
+      "Options": [
+        "4份"
+      ]
+    },
+    {
+      "Item": "卤花肉加蛋",
+      "Source": "食品!L60",
+      "Price": 8.0,
+      "Options": []
+    },
+    {
+      "Item": "云吞",
+      "Source": "食品!L51",
+      "Price": 9.0,
+      "Options": [
+        "炸"
+      ]
+    },
+    {
+      "Item": "招牌豆腐（8粒）",
+      "Source": "食品!L52",
+      "Price": 10.0,
+      "Options": []
+    },
+    {
+      "Item": "虾水饺（4粒）",
+      "Source": "食品!L52",
+      "Price": 10.0,
+      "Options": [
+        "炸"
+      ]
+    },
+    {
+      "Item": "葱油蔬菜",
+      "Source": "食品!L54",
+      "Price": 5.0,
+      "Options": [
+        "小白菜"
+      ]
+    },
+    {
+      "Item": "鱼丸汤",
+      "Source": "食品!L55",
+      "Price": 5.0,
+      "Options": []
+    },
+    {
+      "Item": "煎荷包蛋",
+      "Source": "食品!L56",
+      "Price": 1.5,
+      "Options": []
+    },
+    {
+      "Item": "鸡排／白斩鸡／炸鸡腿",
+      "Source": "食品!L79",
+      "Price": 8.0,
+      "Options": [
+        "炸鸡排肉"
+      ]
+    },
+    {
+      "Item": "咖喱鸡肉",
+      "Source": "食品!C53",
+      "Price": 6.0,
+      "Options": [
+        "小份"
+      ]
+    },
+    {
+      "Item": "咖喱鸡肉",
+      "Source": "食品!L53",
+      "Price": 12.0,
+      "Options": [
+        "大份"
+      ]
+    },
+    {
+      "Item": "叉烧",
+      "Source": "食品!C47",
+      "Price": 4.0,
+      "Options": []
+    },
+    {
+      "Item": "咖喱鸡",
+      "Source": "食品!C47",
+      "Price": 4.0,
+      "Options": []
+    },
+    {
+      "Item": "卤花肉",
+      "Source": "食品!L48",
+      "Price": 5.0,
+      "Options": []
+    },
+    {
+      "Item": "虾",
+      "Source": "食品!L48",
+      "Price": 5.0,
+      "Options": []
+    },
+    {
+      "Item": "烧肉",
+      "Source": "食品!I49",
+      "Price": 8.0,
+      "Options": []
+    },
+    {
+      "Item": "加面（大份）",
+      "Source": "食品!C49",
+      "Price": 3.0,
+      "Options": []
+    },
+    {
+      "Item": "加生面",
+      "Source": "食品!C50",
+      "Price": 3.0,
+      "Options": [
+        "普通份"
+      ]
+    },
+    {
+      "Item": "加生面",
+      "Source": "食品!C50",
+      "Price": 5.0,
+      "Options": [
+        "大份"
+      ]
+    },
+    {
+      "Item": "烧面包",
+      "Source": "饮料!E41",
+      "Price": 2.5,
+      "Options": [
+        "半份"
+      ]
+    },
+    {
+      "Item": "烧面包",
+      "Source": "饮料!E40",
+      "Price": 5.0,
+      "Options": [
+        "一份"
+      ]
+    },
+    {
+      "Item": "甘榜鸡蛋",
+      "Source": "饮料!J41",
+      "Price": 2.0,
+      "Options": [
+        "1粒"
+      ]
+    },
+    {
+      "Item": "甘榜鸡蛋",
+      "Source": "饮料!J40",
+      "Price": 3.5,
+      "Options": [
+        "2粒"
+      ]
+    },
+    {
+      "Item": "Kopi",
+      "Source": "饮料!F3",
+      "Price": 2.5,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Kopi",
+      "Source": "饮料!G3",
+      "Price": 3.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Kopi",
+      "Source": "饮料!H3",
+      "Price": 3.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Kopi",
+      "Source": "饮料!J3",
+      "Price": 4.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Kopi-O",
+      "Source": "饮料!F4",
+      "Price": 2.0,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Kopi-O",
+      "Source": "饮料!G4",
+      "Price": 3.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Kopi-O",
+      "Source": "饮料!H4",
+      "Price": 3.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Kopi-O",
+      "Source": "饮料!J4",
+      "Price": 3.5,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Kopi-O Kosong",
+      "Source": "饮料!F5",
+      "Price": 2.0,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Kopi-O Kosong",
+      "Source": "饮料!G5",
+      "Price": 3.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Kopi-O Kosong",
+      "Source": "饮料!H5",
+      "Price": 3.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Kopi-O Kosong",
+      "Source": "饮料!J5",
+      "Price": 3.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Teh",
+      "Source": "饮料!F6",
+      "Price": 2.5,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Teh",
+      "Source": "饮料!G6",
+      "Price": 3.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Teh",
+      "Source": "饮料!H6",
+      "Price": 3.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Teh",
+      "Source": "饮料!J6",
+      "Price": 4.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Teh-O",
+      "Source": "饮料!F7",
+      "Price": 2.0,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Teh-O",
+      "Source": "饮料!G7",
+      "Price": 3.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Teh-O",
+      "Source": "饮料!H7",
+      "Price": 3.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Teh-O",
+      "Source": "饮料!J7",
+      "Price": 3.5,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Teh-C",
+      "Source": "饮料!F8",
+      "Price": 2.5,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Teh-C",
+      "Source": "饮料!G8",
+      "Price": 3.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Teh-C",
+      "Source": "饮料!H8",
+      "Price": 3.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Teh-C",
+      "Source": "饮料!J8",
+      "Price": 4.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Kopi-C",
+      "Source": "饮料!F8",
+      "Price": 2.5,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Kopi-C",
+      "Source": "饮料!G8",
+      "Price": 3.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Kopi-C",
+      "Source": "饮料!H8",
+      "Price": 3.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Kopi-C",
+      "Source": "饮料!J8",
+      "Price": 4.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Teh-O Kosong",
+      "Source": "饮料!F9",
+      "Price": 2.0,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Teh-O Kosong",
+      "Source": "饮料!G9",
+      "Price": 3.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Teh-O Kosong",
+      "Source": "饮料!H9",
+      "Price": 3.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Teh-O Kosong",
+      "Source": "饮料!J9",
+      "Price": 3.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Teh-O Lemon",
+      "Source": "饮料!F10",
+      "Price": 2.5,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Teh-O Lemon",
+      "Source": "饮料!G10",
+      "Price": 4.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Teh-O Lemon",
+      "Source": "饮料!H10",
+      "Price": 4.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Teh-O Lemon",
+      "Source": "饮料!J10",
+      "Price": 4.5,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Kopi Teh Mix",
+      "Source": "饮料!F11",
+      "Price": 2.5,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Kopi Teh Mix",
+      "Source": "饮料!G11",
+      "Price": 3.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Kopi Teh Mix",
+      "Source": "饮料!H11",
+      "Price": 3.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Kopi Teh Mix",
+      "Source": "饮料!J11",
+      "Price": 4.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Ais Lemon Tea",
+      "Source": "饮料!G12",
+      "Price": 4.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Ais Lemon Tea",
+      "Source": "饮料!H12",
+      "Price": 4.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Ais Lemon Tea",
+      "Source": "饮料!J12",
+      "Price": 5.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Lemon",
+      "Source": "饮料!F13",
+      "Price": 2.5,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Lemon",
+      "Source": "饮料!G13",
+      "Price": 4.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Lemon",
+      "Source": "饮料!H13",
+      "Price": 4.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Lemon",
+      "Source": "饮料!J13",
+      "Price": 4.5,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Milo",
+      "Source": "饮料!F14",
+      "Price": 3.0,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Milo",
+      "Source": "饮料!G14",
+      "Price": 4.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Milo",
+      "Source": "饮料!H14",
+      "Price": 4.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Milo",
+      "Source": "饮料!J14",
+      "Price": 5.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Milo-O",
+      "Source": "饮料!F15",
+      "Price": 2.5,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Milo-O",
+      "Source": "饮料!G15",
+      "Price": 3.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Milo-O",
+      "Source": "饮料!H15",
+      "Price": 3.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Milo-O",
+      "Source": "饮料!J15",
+      "Price": 4.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Milo C Kosong",
+      "Source": "饮料!F16",
+      "Price": 3.0,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Milo C Kosong",
+      "Source": "饮料!G16",
+      "Price": 4.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Milo C Kosong",
+      "Source": "饮料!H16",
+      "Price": 4.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Milo C Kosong",
+      "Source": "饮料!J16",
+      "Price": 5.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Milo Dinosaur Ais",
+      "Source": "饮料!G17",
+      "Price": 5.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Milo Dinosaur Ais",
+      "Source": "饮料!H17",
+      "Price": 5.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Milo Dinosaur Ais",
+      "Source": "饮料!J17",
+      "Price": 6.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Nescafe",
+      "Source": "饮料!F18",
+      "Price": 3.0,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Nescafe",
+      "Source": "饮料!G18",
+      "Price": 4.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Nescafe",
+      "Source": "饮料!H18",
+      "Price": 4.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Nescafe",
+      "Source": "饮料!J18",
+      "Price": 5.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Nescafe-O",
+      "Source": "饮料!F19",
+      "Price": 2.5,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Nescafe-O",
+      "Source": "饮料!G19",
+      "Price": 3.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Nescafe-O",
+      "Source": "饮料!H19",
+      "Price": 3.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Nescafe-O",
+      "Source": "饮料!J19",
+      "Price": 4.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Nescafe C Kosong",
+      "Source": "饮料!F20",
+      "Price": 3.0,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Nescafe C Kosong",
+      "Source": "饮料!G20",
+      "Price": 4.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Nescafe C Kosong",
+      "Source": "饮料!H20",
+      "Price": 4.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Nescafe C Kosong",
+      "Source": "饮料!J20",
+      "Price": 5.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "White Coffee",
+      "Source": "饮料!G21",
+      "Price": 4.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "White Coffee",
+      "Source": "饮料!H21",
+      "Price": 4.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "White Coffee",
+      "Source": "饮料!J21",
+      "Price": 5.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Neslo",
+      "Source": "饮料!F22",
+      "Price": 3.0,
+      "Options": [
+        "Hot"
+      ]
+    },
+    {
+      "Item": "Neslo",
+      "Source": "饮料!G22",
+      "Price": 5.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Neslo",
+      "Source": "饮料!H22",
+      "Price": 5.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Neslo",
+      "Source": "饮料!J22",
+      "Price": 6.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Green Tea",
+      "Source": "饮料!G23",
+      "Price": 1.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Green Tea Lemon",
+      "Source": "饮料!G24",
+      "Price": 3.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Green Tea Lemon",
+      "Source": "饮料!J24",
+      "Price": 3.5,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Honey Lemon",
+      "Source": "饮料!G25",
+      "Price": 4.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Honey Lemon",
+      "Source": "饮料!H25",
+      "Price": 4.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Honey Lemon",
+      "Source": "饮料!I25",
+      "Price": 8.0,
+      "Options": [
+        "Big"
+      ]
+    },
+    {
+      "Item": "Honey Lemon",
+      "Source": "饮料!J25",
+      "Price": 5.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Canned Soft Drinks",
+      "Source": "饮料!G26",
+      "Price": 3.0,
+      "Options": [
+        "100 Plus",
+        "Can"
+      ]
+    },
+    {
+      "Item": "Canned Soft Drinks",
+      "Source": "饮料!G26",
+      "Price": 3.0,
+      "Options": [
+        "Coke",
+        "Can"
+      ]
+    },
+    {
+      "Item": "Canned Soft Drinks",
+      "Source": "饮料!J26",
+      "Price": 3.0,
+      "Options": [
+        "100 Plus",
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Canned Soft Drinks",
+      "Source": "饮料!J26",
+      "Price": 3.0,
+      "Options": [
+        "Coke",
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Winter Melon Barli",
+      "Source": "饮料!G27",
+      "Price": 3.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Winter Melon Barli",
+      "Source": "饮料!H27",
+      "Price": 3.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Winter Melon Barli",
+      "Source": "饮料!I27",
+      "Price": 5.0,
+      "Options": [
+        "Big"
+      ]
+    },
+    {
+      "Item": "Winter Melon Barli",
+      "Source": "饮料!J27",
+      "Price": 3.5,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Winter Melon Barli Lemon",
+      "Source": "饮料!G28",
+      "Price": 4.0,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Winter Melon Barli Lemon",
+      "Source": "饮料!H28",
+      "Price": 4.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Winter Melon Barli Lemon",
+      "Source": "饮料!I28",
+      "Price": 7.0,
+      "Options": [
+        "Big"
+      ]
+    },
+    {
+      "Item": "Winter Melon Barli Lemon",
+      "Source": "饮料!J28",
+      "Price": 5.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Chinese Tea",
+      "Source": "饮料!G29",
+      "Price": 0.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Chinese Tea",
+      "Source": "饮料!H29",
+      "Price": 0.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Chinese Tea",
+      "Source": "饮料!I29",
+      "Price": 1.0,
+      "Options": [
+        "Big"
+      ]
+    },
+    {
+      "Item": "Chinese Tea",
+      "Source": "饮料!J29",
+      "Price": 1.2,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Plain Water",
+      "Source": "饮料!G30",
+      "Price": 0.5,
+      "Options": [
+        "Glass"
+      ]
+    },
+    {
+      "Item": "Plain Water",
+      "Source": "饮料!H30",
+      "Price": 0.5,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Jia Duo Bao Tea",
+      "Source": "饮料!H32",
+      "Price": 4.5,
+      "Options": [
+        "Can"
+      ]
+    },
+    {
+      "Item": "Jia Duo Bao Tea",
+      "Source": "饮料!J32",
+      "Price": 4.5,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Lime Juice with Jelly",
+      "Source": "饮料!H34",
+      "Price": 5.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Lime Juice with Jelly",
+      "Source": "饮料!I34",
+      "Price": 8.0,
+      "Options": [
+        "Big"
+      ]
+    },
+    {
+      "Item": "Lime Juice with Jelly",
+      "Source": "饮料!J34",
+      "Price": 6.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Fruit Juice",
+      "Source": "饮料!H35",
+      "Price": 4.5,
+      "Options": [
+        "Orange",
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Fruit Juice",
+      "Source": "饮料!H35",
+      "Price": 4.5,
+      "Options": [
+        "Apple",
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Fruit Juice",
+      "Source": "饮料!H35",
+      "Price": 4.5,
+      "Options": [
+        "Carrot",
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Fruit Juice",
+      "Source": "饮料!I35",
+      "Price": 8.0,
+      "Options": [
+        "Orange",
+        "Big"
+      ]
+    },
+    {
+      "Item": "Fruit Juice",
+      "Source": "饮料!I35",
+      "Price": 8.0,
+      "Options": [
+        "Apple",
+        "Big"
+      ]
+    },
+    {
+      "Item": "Fruit Juice",
+      "Source": "饮料!I35",
+      "Price": 8.0,
+      "Options": [
+        "Carrot",
+        "Big"
+      ]
+    },
+    {
+      "Item": "Fruit Juice",
+      "Source": "饮料!J35",
+      "Price": 5.0,
+      "Options": [
+        "Orange",
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Fruit Juice",
+      "Source": "饮料!J35",
+      "Price": 5.0,
+      "Options": [
+        "Apple",
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Fruit Juice",
+      "Source": "饮料!J35",
+      "Price": 5.0,
+      "Options": [
+        "Carrot",
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Carrot Milk",
+      "Source": "饮料!H36",
+      "Price": 5.0,
+      "Options": [
+        "Cold"
+      ]
+    },
+    {
+      "Item": "Carrot Milk",
+      "Source": "饮料!I36",
+      "Price": 9.0,
+      "Options": [
+        "Big"
+      ]
+    },
+    {
+      "Item": "Carrot Milk",
+      "Source": "饮料!J36",
+      "Price": 6.0,
+      "Options": [
+        "Take away"
+      ]
+    },
+    {
+      "Item": "Tiger Beer",
+      "Source": "饮料!H37",
+      "Price": 11.0,
+      "Options": [
+        "Can"
+      ]
+    },
+    {
+      "Item": "Carlsberg Beer",
+      "Source": "饮料!H38",
+      "Price": 11.0,
+      "Options": [
+        "Can"
+      ]
+    },
+    {
+      "Item": "Guinness Stout Beer",
+      "Source": "饮料!H39",
+      "Price": 12.0,
+      "Options": [
+        "Can"
+      ]
+    },
+    {
+      "Item": "Mineral Water",
+      "Source": "饮料!F31",
+      "Price": 1.5,
+      "Options": [
+        "Small"
+      ]
+    },
+    {
+      "Item": "Mineral Water",
+      "Source": "饮料!F31",
+      "Price": 3.0,
+      "Options": [
+        "Big"
+      ]
+    }
+  ]
+}

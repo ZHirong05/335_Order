@@ -50,3 +50,16 @@ Item-based split payment validation: 48 automated tests passed, including persis
 Direct payment workflow: 48 tests pass after removing the handoff/undo endpoints. Coverage includes payment-versus-edit concurrency, direct split payment locking, settled-only cashier listing and a payment-page Back link to the still-editable unpaid order. Headless Edge at 390px passed Checkout navigation, Back to enabled Add Item, direct partial payment, remaining quantities after refresh, and final receipt completion.
 
 Bill layout and opt-in splits: 49 tests passed, including settled ordering by latest payment rather than creation or kitchen updates. Headless Edge verified hidden checkboxes by default, Split bill activation, multiple payer completion, reload behavior and phone width.
+
+
+Accounting, statistics and language validation (2026-11-03): 62 automated tests passed. New coverage checks expense persistence/idempotency (including concurrent retries), invalid money/date/description, existing category migration, Malaysia midnight/month boundaries, split receipts, cancelled/unpaid quantities, historical prices, zero-value bill summaries, zero-filled leap-month/year buckets, role/antiforgery enforcement, and persistent en/zh cookie with safe local redirects. Existing ordering/payment tests remain passing.
+
+Headless Edge against an isolated SQLite database passed purchase creation/reload, received sales summaries without food details, Chinese form submission after switching, language persistence and return to English, month/year and beverage ranking filters. Desktop 1440px and phone 390px screenshots were inspected; phone pages have no horizontal document overflow (wide report tables scroll within their container). Existing development data was not changed by validation.
+
+
+Book1 menu validation: 66 tests passed, including 211 workbook price cases submitted through the actual order service. Coverage verifies 74 items/12 categories, Chinese food names/English drink names, one-time import and stable IDs on restart, retained historical bills/payments, missing/duplicate/foreign/disabled option rejection with atomic rollback, selection snapshots and accounting totals after option changes. The embedded catalog SHA256 matches the current Book1.xlsx bytes.
+
+Headless Edge on an isolated development database passed the real catalog startup and /api/menu output, required independent noodle/protein selections, Curry Sheng Mee with CharSiu at RM11, Cold Kopi at RM3.50, two curry portions plus one drink at RM25.50, saved selections on kitchen tickets, and 390px phone layout. Source workbook and actual restaurant database were not modified by these checks. Long option dialogs scroll within the phone viewport.
+
+
+Menu/display revision v2: 77 tests passed, including the original 211 price cases, explicit default prawn, all three chicken-side choices, confirmed RM6/RM12 portions, old/new option suffix rendering, retained quantity brackets in food names, and cashier Malaysia-midnight boundaries independent of later kitchen timestamps. Headless Edge at 390px passed no Included labels, default prawn selection, + heading, all chicken choices, large curry RM12, line-separated cart/kitchen/receipt options, and final settlement appearing on today's cashier list. Validation used an isolated database.

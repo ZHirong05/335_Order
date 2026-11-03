@@ -20,12 +20,16 @@ Core holds entities and DTOs; Infrastructure owns Identity, SQLite and transacti
 - [x] SQLite tests, backup smoke test, HTTP integration launch verification
 - [x] Documentation and Windows scripts (scripts need target-PC validation)
 
+- [x] Daily purchases, daily bill summaries, period-based sales and top-product statistics, and persistent English/Chinese interface preference
+
+- [x] Reviewed Book1 catalog import, independent required option groups, snapshot pricing and 211 source price checks
+
 ## Follow-up milestones (not part of first slice)
 - Refunds and amount-based splits (transactional item-based splits, allocations, full-bill payment/close and tender/change implemented)
-- Daily/monthly reports, CSV and business cutoff boundaries
+- CSV exports and configurable business cutoff boundaries (daily/monthly/yearly payment-based reporting implemented, Malaysia midnight boundary)
 - Full admin CRUD UI/API (including variation editing), staff lifecycle and settings
 - Durable outbox/event replay and kitchen cancellation acknowledgement (gesture-enabled sound implemented)
-- Localization resources for English/Chinese/Malay (current page language is English)
+- Malay localization and menu content translation (English/Chinese interface switching implemented)
 - Production hardening, full requested test matrix, browser/Android acceptance and service deployment validation
 
 Sending food returns to Continue an order. Checkout opens payment without a handoff or order state change. Back returns to editing before any payment is recorded. Partial payments lock items and remain accessible through Continue payment. Cashier lists settled bills only. Final settlement closes the order and releases its table; unfinished kitchen work stays visible. Production acceptance and refunds remain pending.

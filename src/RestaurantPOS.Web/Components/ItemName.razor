@@ -1,0 +1,11 @@
+@{
+    var item = ItemDisplay.Parse(Value);
+}
+<span class="item-description"><span class="item-description-name">@item.Name</span>@if (item.Options.Count > 0)
+    {
+        <span class="item-options">@foreach (var option in item.Options) { <span class="item-option">@option</span> }</span>
+    }
+</span>
+@code {
+    [Parameter, EditorRequired] public string Value { get; set; } = "";
+}

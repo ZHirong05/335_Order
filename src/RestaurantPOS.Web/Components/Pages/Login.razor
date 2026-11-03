@@ -6,7 +6,7 @@
     <AntiforgeryToken />
     <label>Email <input name="email" type="email" required autocomplete="username" /></label>
     <label>Password <input name="password" type="password" required autocomplete="current-password" /></label>
-    <button type="submit">Sign in</button>
+    <button type="submit">@Text["Sign in"]</button>
 </form>
 <p>First installation? <a href="/setup">Set up administrator</a>.</p>
 @code { [SupplyParameterFromQuery(Name = "failed")] public bool Failed { get; set; } }

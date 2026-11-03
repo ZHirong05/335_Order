@@ -52,7 +52,7 @@ Order/bill/ticket DTOs now include `displayNumber` (e.g. `#0001`) and `businessD
 ## Real-time
 `/hubs/orders` allows only Admin/Waiter/Kitchen/Cashier. The server joins authenticated role groups; clients cannot select arbitrary groups. Implemented event names: OrderCreated, KitchenTicketCreated, KitchenTicketUpdated, ItemCancelled. Payload: eventId, eventType, orderId, version. No mutable EF entities or sensitive metadata. UI uses a singleton server event dispatcher over its existing Blazor circuit, then database reconciliation every five seconds. Initial load and resumed circuits reload authoritative tickets. Hub integrations must reconnect and GET authoritative state themselves. Delivery is best effort after commit, not a durable outbox.
 
-Payment settlement also publishes PaymentRecorded and OrderClosed, only after commit. A zero-balance close emits OrderClosed without PaymentRecorded. Refund, reporting and admin CRUD endpoints are **not yet implemented**.
+Payment settlement also publishes PaymentRecorded and OrderClosed, only after commit. A zero-balance close emits OrderClosed without PaymentRecorded. Refund, export and admin CRUD endpoints are **not yet implemented**.
 
 The cashier UI and CashierOrders query list Closed orders only. Unpaid and partially paid orders remain in Continue an order; settled orders disappear through notifications and five-second reconciliation.
 
@@ -63,3 +63,20 @@ The cashier UI and CashierOrders query list Closed orders only. Unpaid and parti
 {"version":3,"items":[{"orderItemId":"<guid>","quantity":1}],"amount":8.50,"method":0,"cashTendered":10.00,"reference":"Person 1","idempotencyKey":"unique-client-key"}
 ```
 The amount must exactly match the selected unpaid quantities at saved prices. Each successful payment stores item allocations, increments the order version and emits PaymentRecorded after commit. Repeating an identical request with the same actor/key returns the original result; changed payloads are rejected. Partial payment keeps AwaitingPayment and table occupancy. The final payment also closes the order and releases its table atomically. Item editing is unavailable after any payment. Bill lines expose PaidQuantity and RemainingQuantity, while preserving original net quantities; Payments include Items allocations. Full checkout can settle the remainder after earlier split payments. Free items are included with the final payer; free-only partial payments are rejected.
+
+
+## Accounting and statistics (Admin/Cashier)
+- `GET /api/accounting/day?date=2026-11-03`: purchases plus bill-level payment summaries, without item details. Receipt dates use Malaysia time. `receivedInPeriod` is that day's receipts; `billTotal` and `totalPaid` are whole-order amounts. Zero-value closed bills are included.
+- `POST /api/accounting/expenses`: `{ "id":"<client-generated-guid>", "purchasedOn":"2026-11-03", "description":"Ice bag", "amount":2.50 }`. Requires antiforgery. Positive two-decimal amounts up to RM999,999,999, trimmed description of 1?200 characters, purchase date from 2000 up to today. Identical ID/actor/payload retries return the saved ID; changed reuse returns 409. Actor/timestamp are server-owned. Writes serialize with SQLite's immediate transaction.
+- `GET /api/statistics?date=2026-11-03&period=Month&group=Beverage`: period Day/Month/Year (0/1/2), group All/Food/Beverage (0/1/2). Returns revenue, payment count, distinct bill count, expenses, zero-filled date buckets, and products ranked by paid allocation revenue. Group filters the ranking only. Year returns monthly buckets; Month returns daily buckets. All sums use decimal saved prices and payment allocations, not current menu prices or cash tender.
+
+`POST /language` is a form endpoint with antiforgery: language `en`/`zh`, local `returnUrl`. Sets an HttpOnly/SameSite language cookie and redirects locally; it changes no business data. This is available before login. Browser forms and Blazor circuits capture the selected language per request; toggling performs a full reload.
+
+
+## Grouped restaurant-menu options
+`GET /api/menu` retains `variations` and adds `optionGroups: [{id,name,options:[{id,name,additionalPrice,isDefault}]}]`. Each group requires exactly one available option. Group option names use Chinese for foods and English for drinks; interface localization does not translate the catalog.
+
+Create/append item inputs accept optional `optionIds`, for example `{ "menuItemId":123, "quantity":2, "notes":"", "optionIds":[401,407] }`. These IDs must belong to that item, include one choice per group, and have no duplicates or disabled options. Do not send `variationId` together with grouped options. The server ignores no pricing data: there is no client-supplied item price; it computes base price plus each surcharge. Missing, foreign, duplicate or unavailable selections return 400 and roll back the whole batch. Group order determines the snapshot display order, not the incoming ID order. Existing legacy items still accept the original single `variationId` input.
+
+
+Menu option defaults are UI preselection hints; clients must still submit one option ID per required group. The default prawn choice does not change its surcharge. Order/bill API names retain their immutable saved snapshots; UI formatting alone separates choices below names and removes the option wrapper brackets. CashierOrders is scoped to today's final settlement events in Asia/Kuala_Lumpur (inclusive midnight, exclusive next midnight), so split bills appear after their final payment and later kitchen updates cannot move a historical bill into today.

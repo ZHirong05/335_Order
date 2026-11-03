@@ -40,6 +40,9 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<BusinessNotifications>();
 builder.Services.AddSingleton<IBusinessEvents>(p => p.GetRequiredService<BusinessNotifications>());
 builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<AccountingService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<UiText>();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealth>("sqlite");
 builder.Services.AddHostedService<BackupWorker>();
 var app = builder.Build();
@@ -49,6 +52,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     await db.Database.MigrateAsync();
     await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
     await Seed.Run(scope.ServiceProvider, app.Environment, app.Configuration);
+    if (app.Configuration.GetValue("Menu:UseRestaurantCatalog", true)) await RestaurantMenuCatalog.Apply(db);
 }
 if (!app.Environment.IsDevelopment()) { app.UseExceptionHandler("/Error"); app.UseHsts(); app.UseHttpsRedirection(); }
 app.UseAuthentication();

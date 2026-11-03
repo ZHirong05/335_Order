@@ -1,14 +1,14 @@
 <div class="quantity-control @(ButtonsOnRight ? "quantity-buttons-right" : "")" role="group" aria-label="@Label">
     @if (!ButtonsOnRight)
     {
-        <button type="button" disabled="@(Disabled || Value <= Min)" aria-label="@($"Decrease {Label}")" @onclick="() => SetValue(Value - 1)">&minus;</button>
+        <button type="button" disabled="@(Disabled || Value <= Min)" aria-label="@($"{Text["Decrease"]} {Label}")" @onclick="() => SetValue(Value - 1)">&minus;</button>
     }
     <input type="number" aria-label="@Label" min="@Min" max="@Max" value="@Value" disabled="@Disabled" @onchange="Changed" />
     @if (ButtonsOnRight)
     {
-        <button type="button" disabled="@(Disabled || Value <= Min)" aria-label="@($"Decrease {Label}")" @onclick="() => SetValue(Value - 1)">&minus;</button>
+        <button type="button" disabled="@(Disabled || Value <= Min)" aria-label="@($"{Text["Decrease"]} {Label}")" @onclick="() => SetValue(Value - 1)">&minus;</button>
     }
-    <button type="button" disabled="@(Disabled || Value >= Max)" aria-label="@($"Increase {Label}")" @onclick="() => SetValue(Value + 1)">+</button>
+    <button type="button" disabled="@(Disabled || Value >= Max)" aria-label="@($"{Text["Increase"]} {Label}")" @onclick="() => SetValue(Value + 1)">+</button>
 </div>
 @code {
     [Parameter] public int Value { get; set; } = 1;

@@ -13,6 +13,9 @@ public sealed class PosDb(DbContextOptions<PosDb> options) : IdentityDbContext<A
     public DbSet<MenuCategory> Categories => Set<MenuCategory>();
     public DbSet<MenuItem> Menu => Set<MenuItem>();
     public DbSet<MenuItemVariation> MenuVariations => Set<MenuItemVariation>();
+    public DbSet<MenuOptionGroup> MenuOptionGroups => Set<MenuOptionGroup>();
+    public DbSet<MenuOption> MenuOptions => Set<MenuOption>();
+    public DbSet<MenuCatalogImport> MenuCatalogImports => Set<MenuCatalogImport>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<KitchenTicket> Tickets => Set<KitchenTicket>();
@@ -20,12 +23,26 @@ public sealed class PosDb(DbContextOptions<PosDb> options) : IdentityDbContext<A
     public DbSet<RequestRecord> Requests => Set<RequestRecord>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
+    public DbSet<Expense> Expenses => Set<Expense>();
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);
         var money = new ValueConverter<decimal, long>(v => decimal.ToInt64(v * 100m), v => v / 100m);
+        b.Entity<Expense>().Property(x => x.Amount).HasConversion(money);
+        b.Entity<Expense>().Property(x => x.Description).HasMaxLength(200);
+        b.Entity<Expense>().HasIndex(x => x.PurchasedOn);
+        b.Entity<Expense>().HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.RecordedByUserId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<Expense>().ToTable(t => t.HasCheckConstraint("CK_Expense", "Amount > 0 AND length(Description) BETWEEN 1 AND 200"));
         b.Entity<MenuItem>().Property(x => x.Price).HasConversion(money);
         b.Entity<MenuItemVariation>().Property(x => x.AdditionalPrice).HasConversion(money);
+        b.Entity<MenuOption>().Property(x => x.AdditionalPrice).HasConversion(money);
+        b.Entity<MenuOption>().ToTable(t => t.HasCheckConstraint("CK_OptionPrice", "AdditionalPrice >= 0"));
+        b.Entity<MenuItem>().HasMany(x => x.OptionGroups).WithOne().HasForeignKey(x => x.MenuItemId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<MenuOptionGroup>().HasMany(x => x.Options).WithOne().HasForeignKey(x => x.MenuOptionGroupId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<MenuOptionGroup>().HasIndex(x => new { x.MenuItemId, x.Name }).IsUnique();
+        b.Entity<MenuOption>().HasIndex(x => new { x.MenuOptionGroupId, x.Name }).IsUnique();
+        b.Entity<MenuOption>().HasIndex(x => x.MenuOptionGroupId).IsUnique().HasFilter("IsDefault = 1");
+        b.Entity<MenuCatalogImport>().HasKey(x => x.Key);
         b.Entity<MenuItemVariation>().HasIndex(x => new { x.MenuItemId, x.Name }).IsUnique();
         b.Entity<MenuItem>().HasMany(x => x.Variations).WithOne().HasForeignKey(x => x.MenuItemId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<MenuItemVariation>().ToTable(t => t.HasCheckConstraint("CK_VariationPrice", "AdditionalPrice >= 0"));

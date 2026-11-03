@@ -1,0 +1,65 @@
+@page "/statistics"
+@attribute [Authorize(Roles = "Admin,Cashier")]
+@rendermode InteractiveServer
+@inject AccountingService Service
+@inject ILogger<Statistics> Logger
+<PageTitle>@Text["Statistics"] · 335 Order</PageTitle>
+<div class="flow-heading"><h1>@Text["Statistics"]</h1></div>
+<form class="report-filters" @onsubmit="Load" @onsubmit:preventDefault="true">
+    <label>@Text["Period"]<select @bind="period"><option value="@ReportPeriod.Day">@Text["Day"]</option><option value="@ReportPeriod.Month">@Text["Month"]</option><option value="@ReportPeriod.Year">@Text["Year"]</option></select></label>
+    <label>@Text["Date"]<input type="date" min="2000-01-01" max="9998-12-31" @bind="date" required /></label>
+    <label>@Text["Category"]<select @bind="group"><option value="@ProductGroup.All">@Text["All"]</option><option value="@ProductGroup.Food">@Text["Food"]</option><option value="@ProductGroup.Beverage">@Text["Beverages"]</option></select></label>
+    <button disabled="@loading">@Text["Apply"]</button>
+</form>
+<p class="muted">@Text["Reports use Malaysia time and actual payments, including split payments. Change is excluded."]</p>
+@if (error != null) { <p class="notice error" role="alert">@error</p> }
+@if (loading) { <p role="status">@Text["Loading..."]</p> }
+@if (report != null)
+{
+    <p class="report-range">@report.From.ToString("yyyy-MM-dd") — @report.Through.ToString("yyyy-MM-dd")</p>
+    <div class="report-summary">
+        <div class="card"><span>@Text["Sales received"]</span><strong>RM @report.Revenue.ToString("0.00")</strong></div>
+        <div class="card"><span>@Text["Bills paid towards"]</span><strong>@report.BillCount</strong><small>@Text["Payments"]: @report.PaymentCount</small></div>
+        <div class="card"><span>@Text["Total purchases"]</span><strong>RM @report.Expenses.ToString("0.00")</strong></div>
+    </div>
+    <section class="card"><h2>@Text["Sales trend"]</h2>
+        @if (report.Revenue == 0) { <p class="empty-panel">@Text["No sales in this period."]</p> }
+        <div class="sales-chart" aria-label="@Text["Sales trend"]">
+            @foreach (var bucket in report.Buckets)
+            {
+                <div class="sales-bar-row"><span>@bucket.Label</span><meter min="0" max="@Math.Max(1m, report.Buckets.Max(b => b.Sales))" value="@bucket.Sales" aria-label="@($"{bucket.Label}: RM {bucket.Sales:0.00}")">@bucket.Sales</meter><strong>RM @bucket.Sales.ToString("0.00")</strong></div>
+            }
+        </div>
+    </section>
+    <section class="card"><h2>@Text["Top selling items"] · @Text[shownGroup.ToString() == "Beverage" ? "Beverages" : shownGroup.ToString()]</h2>
+        <p class="muted">@Text["Ranked by revenue; quantities include paid items only."]</p>
+        @if (report.Products.Count == 0) { <p class="empty-panel">@Text["No paid items in this category."]</p> }
+        else
+        {
+            <div class="report-table"><table><thead><tr><th>#</th><th>@Text["Item"]</th><th>@Text["Category"]</th><th>@Text["Quantity sold"]</th><th>@Text["Revenue"] (RM)</th></tr></thead><tbody>
+                @for (var index = 0; index < report.Products.Count; index++)
+                {
+                    var product = report.Products[index];
+                    <tr><td>@(index + 1)</td><td><strong><ItemName Value="@product.Name" /></strong></td><td>@Text[product.Category]</td><td>@product.Quantity</td><td>@product.Revenue.ToString("0.00")</td></tr>
+                }
+            </tbody></table></div>
+        }
+    </section>
+}
+@code {
+    private DateTime date;
+    private ReportPeriod period = ReportPeriod.Day;
+    private ProductGroup group, shownGroup;
+    private SalesReport? report;
+    private bool loading;
+    private string? error;
+    protected override async Task OnInitializedAsync() { date = Service.Today.ToDateTime(TimeOnly.MinValue); await Load(); }
+    private async Task Load()
+    {
+        if (loading) return;
+        loading = true; error = null;
+        try { report = await Service.Statistics(DateOnly.FromDateTime(date), period, group); shownGroup = group; }
+        catch (Exception ex) { report = null; error = Text["Could not load data. Please try again."]; Logger.LogError(ex, "Statistics load failed"); }
+        finally { loading = false; }
+    }
+}

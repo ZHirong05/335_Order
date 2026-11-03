@@ -9,22 +9,22 @@
 @inject IJSRuntime JS
 @inject ILogger<Cashier> Logger
 @inject NavigationManager Nav
-<PageTitle>Bills · 335 Order</PageTitle>
+<PageTitle>@Text["Cashier"] · 335 Order</PageTitle>
 <div class="flow-heading no-print @(!Id.HasValue ? "flow-actions" : "")">
-    @if (Id.HasValue) { <h1>Order bill</h1> }
-    @if (Id.HasValue) { <a class="secondary-button order-back" href="@(bill?.Status == OrderStatus.Closed ? "/cashier" : $"/order/{Id}")">&larr; Back</a> }
-    else { <button class="secondary-button" disabled="@(loading || busy)" @onclick="Load">Refresh bills</button> }
+    @if (Id.HasValue) { <h1>@Text["Order bill"]</h1> }
+    @if (Id.HasValue) { <a class="secondary-button order-back" href="@(bill?.Status == OrderStatus.Closed ? "/cashier" : $"/order/{Id}")">&larr; @Text["Back"]</a> }
+    else { <button class="secondary-button" disabled="@(loading || busy)" @onclick="Load">@Text["Refresh bills"]</button> }
 </div>
-@if (Submitted) { <p class="notice no-print" role="status">Order sent to the kitchen successfully.</p> }
-@if (message != null) { <p class="notice no-print" role="status">@message</p> }
-@if (orders == null && loading) { <p>Loading orders…</p> }
-else if (orders == null) { <div class="empty-panel">Bill data is unavailable. Use Refresh bills to try again.</div> }
+@if (Submitted) { <p class="notice no-print" role="status">@Text["Order sent to the kitchen successfully."]</p> }
+@if (message != null) { <p class="notice no-print" role="status">@Text[message]</p> }
+@if (orders == null && loading) { <p>@Text["Loading orders…"]</p> }
+else if (orders == null) { <div class="empty-panel">@Text["Bill data is unavailable. Use Refresh bills to try again."]</div> }
 else if (!Id.HasValue)
 {
     var settled = orders.Where(o => o.Status == OrderStatus.Closed).ToList();
     <section class="cashier-bill-section settled-bills" aria-labelledby="settled-bills-title">
-        <div class="section-heading"><h2 id="settled-bills-title">Settled bills</h2><span>@settled.Count @(settled.Count == 1 ? "bill" : "bills")</span></div>
-        @if (settled.Count == 0) { <div class="empty-panel">No settled bills yet.</div> }
+        <div class="section-heading"><h2 id="settled-bills-title">@Text["Settled bills"]</h2><span>@settled.Count @(settled.Count == 1 ? "bill" : "bills")</span></div>
+        @if (settled.Count == 0) { <div class="empty-panel">@Text["No settled bills today."]</div> }
         <div class="continue-grid">
             @foreach (var order in settled) { <OrderPreviewCard Order="order" Href="@($"/cashier/{order.Id}")" ActionText="View receipt" /> }
         </div>
@@ -33,67 +33,67 @@ else if (!Id.HasValue)
 else if (bill != null)
 {
     <article class="receipt card">
-        <h2>335 Order · @(bill.Status == OrderStatus.Closed ? "Closed bill / receipt" : "Provisional bill")</h2>
-        <p>@bill.DisplayNumber · @bill.BusinessDate · @bill.Destination</p>
+        <h2>335 Order · @(bill.Status == OrderStatus.Closed ? Text["Closed bill / receipt"] : Text["Provisional bill"])</h2>
+        <p>@bill.DisplayNumber · @bill.BusinessDate · @Text.Destination(bill.Destination)</p>
         <p>@LocalTime(DateTime.UtcNow) MYT</p>
-        <div class="receipt-table"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit RM</th><th>Total RM</th></tr></thead><tbody>
-        @foreach (var i in bill.Items) { <tr><td>@i.Name<br />@i.Notes</td><td>@i.Quantity</td><td>@i.UnitPrice.ToString("0.00")</td><td>@((i.Quantity * i.UnitPrice).ToString("0.00"))</td></tr> }
+        <div class="receipt-table"><table><thead><tr><th>@Text["Item"]</th><th>@Text["Qty"]</th><th>@Text["Unit RM"]</th><th>@Text["Total RM"]</th></tr></thead><tbody>
+        @foreach (var i in bill.Items) { <tr><td><ItemName Value="@i.Name" /><br />@i.Notes</td><td>@i.Quantity</td><td>@i.UnitPrice.ToString("0.00")</td><td>@((i.Quantity * i.UnitPrice).ToString("0.00"))</td></tr> }
         </tbody></table></div>
-        <p><strong>Total RM @bill.Total.ToString("0.00")</strong></p>
-        <p>Paid RM @bill.Paid.ToString("0.00") · Balance RM @bill.Balance.ToString("0.00")</p>
+        <p><strong>@Text["Total RM"] @bill.Total.ToString("0.00")</strong></p>
+        <p>@Text["Paid"] RM @bill.Paid.ToString("0.00") · @Text["Balance"] RM @bill.Balance.ToString("0.00")</p>
         @for (var index = 0; index < (bill.Payments?.Count ?? 0); index++)
         {
             var payment = bill.Payments![index];
-            <div class="receipt-payment"><h3>Payment @(index + 1) &middot; @payment.Method &middot; RM @payment.Amount.ToString("0.00")</h3><p>@LocalTime(payment.ReceivedAtUtc) MYT</p>
-                <ul class="payment-allocated-items">@foreach (var item in payment.Items ?? []) { <li><span>@item.Quantity &times; @item.Name</span><strong>RM @item.Amount.ToString("0.00")</strong></li> }</ul>
-                @if (payment.Method == PaymentMethod.Cash) { <p>Cash received RM @payment.CashTendered.ToString("0.00") &middot; Change RM @payment.Change.ToString("0.00")</p> }
-                @if (payment.Reference.Length > 0) { <p>Reference: @payment.Reference</p> }
+            <div class="receipt-payment"><h3>@Text["Payment"] @(index + 1) &middot; @Text.Payment(payment.Method.ToString()) &middot; RM @payment.Amount.ToString("0.00")</h3><p>@LocalTime(payment.ReceivedAtUtc) MYT</p>
+                <ul class="payment-allocated-items">@foreach (var item in payment.Items ?? []) { <li><span>@item.Quantity &times; <ItemName Value="@item.Name" /></span><strong>RM @item.Amount.ToString("0.00")</strong></li> }</ul>
+                @if (payment.Method == PaymentMethod.Cash) { <p>@Text["Cash received RM"] @payment.CashTendered.ToString("0.00") &middot; @Text["Change RM"] @payment.Change.ToString("0.00")</p> }
+                @if (payment.Reference.Length > 0) { <p>@Text["Reference:"] @payment.Reference</p> }
             </div>
         }
-        @if (bill.Status == OrderStatus.Closed) { <p class="settled-label">CLOSED · Balance settled</p> }
+        @if (bill.Status == OrderStatus.Closed) { <p class="settled-label">@Text["CLOSED · Balance settled"]</p> }
     </article>
-    @if (bill.Status == OrderStatus.Closed) { <div class="bill-actions no-print"><button @onclick="Print">Print bill</button></div> }
+    @if (bill.Status == OrderStatus.Closed) { <div class="bill-actions no-print"><button @onclick="Print">@Text["Print bill"]</button></div> }
     @if (bill.Status != OrderStatus.Closed && !paymentConfirmed)
     {
         <AuthorizeView Roles="Admin,Cashier">
             <section class="checkout-panel no-print">
-                <div class="cart-heading"><h2>Payment</h2><strong>RM @SelectedSubtotal.ToString("0.00")</strong></div>
-                <p class="payment-person">Person @((bill.Payments?.Count ?? 0) + 1) &middot; Remaining bill RM @bill.Balance.ToString("0.00")</p>
+                <div class="cart-heading"><h2>@Text["Payment"]</h2><strong>RM @SelectedSubtotal.ToString("0.00")</strong></div>
+                <p class="payment-person">@Text["Person"] @((bill.Payments?.Count ?? 0) + 1) &middot; @Text["Remaining bill"] RM @bill.Balance.ToString("0.00")</p>
                 <form @onsubmit="Checkout" @onsubmit:preventDefault="true">
                     @if (bill.Balance > 0)
                     {
-                        <div class="split-mode-actions"><button type="button" class="secondary-button" disabled="@(busy || PaymentPending)" @onclick="ToggleSplit">@(splitMode ? "Pay full remaining bill" : "Split bill")</button></div>
+                        <div class="split-mode-actions"><button type="button" class="secondary-button" disabled="@(busy || PaymentPending)" @onclick="ToggleSplit">@(splitMode ? Text["Pay full remaining bill"] : Text["Split bill"])</button></div>
                         @if (splitMode)
                         {
-                        <p class="muted">Select what this person is paying for. Paid quantities are removed for the next person.</p>
-                        <div class="split-selection-actions"><button type="button" class="secondary-button" disabled="@(busy || PaymentPending)" @onclick="SelectAllItems">Select all remaining</button><button type="button" class="secondary-button" disabled="@(busy || PaymentPending)" @onclick="ClearItems">Clear selection</button></div>
+                        <p class="muted">@Text["Select what this person is paying for. Paid quantities are removed for the next person."]</p>
+                        <div class="split-selection-actions"><button type="button" class="secondary-button" disabled="@(busy || PaymentPending)" @onclick="SelectAllItems">@Text["Select all remaining"]</button><button type="button" class="secondary-button" disabled="@(busy || PaymentPending)" @onclick="ClearItems">@Text["Clear selection"]</button></div>
                         <div class="split-item-list">
                             @foreach (var item in bill.Items.Where(i => i.RemainingQuantity > 0))
                             {
                                 <div class="split-item-row" @key="item.Id">
-                                    <label class="split-item-checkbox"><input type="checkbox" disabled="@(busy || PaymentPending)" checked="@selectedItems.ContainsKey(item.Id)" @onchange="e => SelectItem(item, e.Value is true)" /><span><strong>@item.Name</strong><small>@item.RemainingQuantity remaining &middot; RM @item.UnitPrice.ToString("0.00") each</small></span></label>
-                                    <div class="split-quantity quantity-field"><span>Pay quantity</span><QuantityInput Value="@selectedItems.GetValueOrDefault(item.Id, 1)" ValueChanged="value => ChangeQuantity(item, value.ToString())" Max="item.RemainingQuantity" Disabled="@(busy || PaymentPending || !selectedItems.ContainsKey(item.Id))" Label="Pay quantity" /></div>
+                                    <label class="split-item-checkbox"><input type="checkbox" disabled="@(busy || PaymentPending)" checked="@selectedItems.ContainsKey(item.Id)" @onchange="e => SelectItem(item, e.Value is true)" /><span><strong><ItemName Value="@item.Name" /></strong><small>@item.RemainingQuantity @Text["remaining"] &middot; RM @item.UnitPrice.ToString("0.00") @Text["each"]</small></span></label>
+                                    <div class="split-quantity quantity-field"><span>@Text["Pay quantity"]</span><QuantityInput Value="@selectedItems.GetValueOrDefault(item.Id, 1)" ValueChanged="value => ChangeQuantity(item, value.ToString())" Max="item.RemainingQuantity" Disabled="@(busy || PaymentPending || !selectedItems.ContainsKey(item.Id))" Label="@Text["Pay quantity"]" /></div>
                                     <strong class="split-line-total">RM @((selectedItems.GetValueOrDefault(item.Id) * item.UnitPrice).ToString("0.00"))</strong>
                                 </div>
                             }
                         </div>
-                        <div class="split-subtotal"><span>This person's subtotal</span><strong>RM @SelectedSubtotal.ToString("0.00")</strong></div>
+                        <div class="split-subtotal"><span>@Text["This person's subtotal"]</span><strong>RM @SelectedSubtotal.ToString("0.00")</strong></div>
                         }
-                        <p class="muted">Record only a payment you have received.</p>
-                        <label>Payment method<select @bind="paymentMethod" disabled="@(busy || PaymentPending)">@foreach (var method in Enum.GetValues<PaymentMethod>()) { <option value="@method">@method</option> }</select></label>
+                        <p class="muted">@Text["Record only a payment you have received."]</p>
+                        <label>@Text["Payment method"]<select @bind="paymentMethod" disabled="@(busy || PaymentPending)">@foreach (var method in Enum.GetValues<PaymentMethod>()) { <option value="@method">@Text.Payment(method.ToString())</option> }</select></label>
                         @if (paymentMethod == PaymentMethod.Cash)
                         {
-                            <label>Cash received (RM)<input type="number" min="0" step="0.01" required @bind="cashReceived" @bind:event="oninput" @bind:after="CashChanged" disabled="@(busy || PaymentPending)" /></label>
-                            <p>Change: <strong>RM @Math.Max(0m, (cashReceived ?? 0m) - SelectedSubtotal).ToString("0.00")</strong></p>
-                            @if ((cashReceived ?? 0m) < SelectedSubtotal) { <p class="error">Cash received must cover this person's subtotal.</p> }
+                            <label>@Text["Cash received (RM)"]<input type="number" min="0" step="0.01" required @bind="cashReceived" @bind:event="oninput" @bind:after="CashChanged" disabled="@(busy || PaymentPending)" /></label>
+                            <p>@Text["Change:"] <strong>RM @Math.Max(0m, (cashReceived ?? 0m) - SelectedSubtotal).ToString("0.00")</strong></p>
+                            @if ((cashReceived ?? 0m) < SelectedSubtotal) { <p class="error">@Text["Cash received must cover this person's subtotal."]</p> }
                         }
-                        <label>Payment reference (optional)<input maxlength="100" @bind="paymentReference" disabled="@(busy || PaymentPending)" /></label>
+                        <label>@Text["Payment reference (optional)"]<input maxlength="100" @bind="paymentReference" disabled="@(busy || PaymentPending)" /></label>
                     }
-                    else { <p>No payment is due. Confirm to close this order.</p> }
+                    else { <p>@Text["No payment is due. Confirm to close this order."]</p> }
                     <div class="bill-actions">
-                        <button type="button" class="secondary-button" @onclick="Print">Print bill</button>
-                        <a class="secondary-button" href="@($"/order/{Id}")">Back to order</a>
-                        <button type="submit" disabled="@(!CanConfirmPayment)">@PaymentButtonLabel</button>
+                        <button type="button" class="secondary-button" @onclick="Print">@Text["Print bill"]</button>
+                        <a class="secondary-button" href="@($"/order/{Id}")">@Text["Back to order"]</a>
+                        <button type="submit" disabled="@(!CanConfirmPayment)">@Text[PaymentButtonLabel]</button>
                     </div>
                 </form>
             </section>

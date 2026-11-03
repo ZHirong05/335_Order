@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using RestaurantPOS.Core;
+using RestaurantPOS.Infrastructure;
 namespace RestaurantPOS.Tests;
 
 public sealed class WebTests
@@ -42,10 +43,11 @@ public sealed class WebTests
         Assert.Equal(21m, bill!.Total); Assert.Equal("Nasi Lemak (Large)", bill.Items.Single().Name);
         Assert.Contains("Nasi Lemak (Large)", await client.GetStringAsync("/api/kitchen/tickets"));
         var preview = await client.GetStringAsync($"/cashier/{bill.OrderId}");
-        Assert.Contains("Nasi Lemak (Large)", preview); Assert.Contains("Less chili", preview);
+        Assert.Contains("Nasi Lemak", preview); Assert.Contains("class=\"item-option\">Large", preview); Assert.Contains("Less chili", preview);
+        Assert.DoesNotContain("Nasi Lemak (Large)", preview);
         Assert.Contains("RM 21.00", await client.GetStringAsync($"/cashier/{bill.OrderId}"));
         var orderPage = await client.GetStringAsync("/order");
-        Assert.Contains("打包", orderPage); Assert.Contains("吃", orderPage);
+        Assert.Contains("Take away", orderPage); Assert.Contains("Dine-in", orderPage);
     }
     [Fact] public async Task FirstRunSetupRequiresSecretAndClosesAfterAdminCreation()
     {
@@ -121,6 +123,41 @@ public sealed class WebTests
         Assert.Contains("CLOSED", await cashier.GetStringAsync($"/cashier/{bill.OrderId}"));
         Assert.Equal(HttpStatusCode.Created, (await waiter.PostAsJsonAsync("/api/orders", request with { IdempotencyKey = Guid.NewGuid().ToString() })).StatusCode);
     }
+    [Fact] public async Task AccountingEndpointsRequireRoleAndAntiforgeryAndPersistExpenses()
+    {
+        using var app = new TestApp();
+        using var waiter = app.CreateClient(new() { AllowAutoRedirect = false }); await Login(waiter, "waiter", app.Password);
+        Assert.Equal(HttpStatusCode.Forbidden, (await waiter.GetAsync("/api/accounting/day?date=2026-11-01")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await waiter.GetAsync("/api/statistics?date=2026-11-01&period=Day")).StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, (await waiter.GetAsync("/accounting")).StatusCode);
+        using var cashier = app.CreateClient(new() { AllowAutoRedirect = false }); await Login(cashier, "cashier", app.Password);
+        var today = AccountingService.LocalDate(DateTime.UtcNow);
+        var expense = new ExpenseInput(Guid.NewGuid(), today, "Ice bag", 2.5m);
+        Assert.Equal(HttpStatusCode.BadRequest, (await cashier.PostAsJsonAsync("/api/accounting/expenses", expense)).StatusCode);
+        var token = await cashier.GetFromJsonAsync<Token>("/api/antiforgery"); cashier.DefaultRequestHeaders.Add("RequestVerificationToken", token!.token);
+        Assert.Equal(HttpStatusCode.OK, (await cashier.PostAsJsonAsync("/api/accounting/expenses", expense)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await cashier.PostAsJsonAsync("/api/accounting/expenses", expense)).StatusCode);
+        var day = await cashier.GetFromJsonAsync<AccountingDay>($"/api/accounting/day?date={today:yyyy-MM-dd}");
+        Assert.Equal(2.5m, day!.Spending); Assert.Single(day.Expenses);
+        Assert.Equal(HttpStatusCode.OK, (await cashier.GetAsync("/statistics")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await cashier.GetAsync("/api/statistics?date=2026-11-01&period=99")).StatusCode);
+    }
+    [Fact] public async Task LanguageTogglePersistsAndRejectsUnsafeRedirects()
+    {
+        using var app = new TestApp(bypass: true);
+        using var client = app.CreateClient(new() { AllowAutoRedirect = false });
+        var html = await client.GetStringAsync("/accounting");
+        var token = WebUtility.HtmlDecode(Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
+        var response = await client.PostAsync("/language", new FormUrlEncodedContent(new Dictionary<string, string> { ["language"] = "zh", ["returnUrl"] = "/statistics", ["__RequestVerificationToken"] = token }));
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode); Assert.Equal("/statistics", response.Headers.Location!.OriginalString);
+        html = WebUtility.HtmlDecode(await client.GetStringAsync("/accounting"));
+        Assert.Contains("账务", html); Assert.Contains("采购开销", html); Assert.Contains("lang=\"zh-Hans\"", html);
+        html = WebUtility.HtmlDecode(await client.GetStringAsync("/order")); Assert.Contains("打包", html); Assert.Contains("吃", html);
+        response = await client.PostAsync("/language", new FormUrlEncodedContent(new Dictionary<string, string> { ["language"] = "en", ["returnUrl"] = "//example.com", ["__RequestVerificationToken"] = token }));
+        Assert.Equal("/dashboard", response.Headers.Location!.OriginalString);
+        Assert.Contains("Daily sales", await client.GetStringAsync("/accounting"));
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/language", new FormUrlEncodedContent(new Dictionary<string, string> { ["language"] = "zh" }))).StatusCode);
+    }
     private sealed record Token(string token);
     [Fact] public async Task OptionalCancellationAndSettledCashierSectionWorkThroughHttp()
     {
@@ -175,6 +212,7 @@ public sealed class WebTests
             builder.UseSetting("Development:SkipSignIn", bypass.ToString());
             builder.UseSetting("Data:Directory", folder);
             builder.UseSetting("Seed:Enabled", seed.ToString());
+            builder.UseSetting("Menu:UseRestaurantCatalog", "false");
             if (!bypass) builder.UseSetting("Seed:Password", Password);
             builder.UseSetting("Setup:Token", SetupToken);
         }

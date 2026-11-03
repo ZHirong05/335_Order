@@ -42,7 +42,7 @@ public static class Seed
         var db = services.GetRequiredService<PosDb>();
         if (await db.Menu.AnyAsync()) { await SeedVariations(db); return; }
         db.Tables.AddRange(Enumerable.Range(1, 10).Select(n => new DiningTable { Number = n }));
-        var mains = new MenuCategory { Name = "Rice & noodles" }; var drinks = new MenuCategory { Name = "Drinks" };
+        var mains = new MenuCategory { Name = "Rice & noodles" }; var drinks = new MenuCategory { Name = "Drinks", IsBeverage = true };
         db.Menu.AddRange(new MenuItem { Category = mains, Name = "Nasi Lemak", Price = 8.50m }, new MenuItem { Category = mains, Name = "Char Kuey Teow", Price = 10.00m }, new MenuItem { Category = mains, Name = "Chicken Rice", Price = 9.50m }, new MenuItem { Category = drinks, Name = "Teh Tarik", Price = 3.20m }, new MenuItem { Category = drinks, Name = "Kopi O", Price = 2.80m });
         await db.SaveChangesAsync();
         await SeedVariations(db);

@@ -1,17 +1,17 @@
 @{
     var items = Order.Items.Where(i => i.Quantity > i.CancelledQuantity).ToList();
-    var destination = Order.Table == null ? "Take away" : $"Table {Order.Table.Number}";
+    var destination = Order.Table == null ? Text["Take away"] : $"{Text["Table"]} {Order.Table.Number}";
     var status = Order.Status switch { OrderStatus.Closed => "Settled", OrderStatus.AwaitingPayment => "Partially paid", _ => "Open order" };
 }
 <a class="continue-order continue-order-preview @(Order.Status == OrderStatus.Closed ? "settled-order-preview" : "")" href="@Href" aria-label="@($"{ActionText}: {destination} {Order.DisplayNumber}")">
     <div class="continue-card-heading"><strong>@destination</strong><strong>@Order.DisplayNumber</strong></div>
-    <p class="muted"><span class="@(Order.Status == OrderStatus.Closed ? "settled-status" : "")">@status</span> · @Order.BusinessDate</p>
+    <p class="muted"><span class="@(Order.Status == OrderStatus.Closed ? "settled-status" : "")">@Text[status]</span> · @Order.BusinessDate</p>
     <ul class="continue-item-list">
-        @foreach (var item in items.Take(4)) { <li><strong>@(item.Quantity - item.CancelledQuantity) ×</strong> @item.ItemNameSnapshot@if (!string.IsNullOrWhiteSpace(item.Notes)) { <small>@item.Notes</small> }</li> }
+        @foreach (var item in items.Take(4)) { <li><strong>@(item.Quantity - item.CancelledQuantity) ×</strong> <ItemName Value="@item.ItemNameSnapshot" />@if (!string.IsNullOrWhiteSpace(item.Notes)) { <small>@item.Notes</small> }</li> }
     </ul>
-    @if (items.Count == 0) { <p class="muted">No remaining items.</p> }
+    @if (items.Count == 0) { <p class="muted">@Text["No remaining items."]</p> }
     @if (items.Count > 4) { <p class="muted">+ @(items.Count - 4) more items</p> }
-    <div class="continue-card-footer">@items.Sum(i => i.Quantity - i.CancelledQuantity) @(items.Sum(i => i.Quantity - i.CancelledQuantity) == 1 ? "item" : "items") <span>@ActionText →</span></div>
+    <div class="continue-card-footer">@items.Sum(i => i.Quantity - i.CancelledQuantity) @(items.Sum(i => i.Quantity - i.CancelledQuantity) == 1 ? "item" : "items") <span>@Text[ActionText] →</span></div>
 </a>
 @code {
     [Parameter, EditorRequired] public Order Order { get; set; } = null!;

@@ -6,38 +6,38 @@
 @inject BusinessNotifications Notifications
 @inject AuthenticationStateProvider Authentication
 @inject IJSRuntime JS
-<PageTitle>Kitchen · 335 Order</PageTitle>
-<h1>订单</h1>
+<PageTitle>@Text["Kitchen display"] · 335 Order</PageTitle>
+<h1>@Text["Kitchen display"]</h1>
 @if (error != null) { <p class="error" role="alert">@error</p> }
-@if (tickets == null) { <p>Loading kitchen tickets…</p> }
-else if (tickets.Count == 0) { <p>No outstanding orders.</p> }
+@if (tickets == null) { <p>@Text["Loading kitchen tickets…"]</p> }
+else if (tickets.Count == 0) { <p>@Text["No outstanding orders."]</p> }
 else
 {
     <div class="menu-grid">
     @foreach (var t in tickets)
     {
         <section class="card kitchen-card @(t.Status == KitchenStatus.Cancelled ? "cancelled" : t.Status == KitchenStatus.Ready ? "kitchen-card-ready" : "")">
-            <h2>@(t.Order.Table == null ? "TAKEAWAY" : $"TABLE {t.Order.Table.Number}")@if (t.Status == KitchenStatus.Preparing) { <br /> } else { <text> · </text> }@StatusLabel(t.Status)</h2>
+            <h2>@(t.Order.Table == null ? Text["Takeaway"] : $"{Text["Table"]} {t.Order.Table.Number}")@if (t.Status == KitchenStatus.Preparing) { <br /> } else { <text> · </text> }@StatusLabel(t.Status)</h2>
             <p>@t.Order.DisplayNumber · @t.Order.BusinessDate</p>
-            @if (t.Order.Status == OrderStatus.Closed) { <p class="settled-label">PAID / CHECKED OUT · Continue preparing this ticket</p> }
-            <p>@(Math.Max(0, (int)(DateTime.UtcNow - t.CreatedAtUtc).TotalMinutes))分钟前</p>
+            @if (t.Order.Status == OrderStatus.Closed) { <p class="settled-label">@Text["PAID / CHECKED OUT · Continue preparing this ticket"]</p> }
+            <p>@(Math.Max(0, (int)(DateTime.UtcNow - t.CreatedAtUtc).TotalMinutes))@(Text.Pick(" minutes elapsed", "分钟前"))</p>
             @foreach (var i in t.Items)
             {
-                @if (i.Quantity > i.OrderItem.CancelledQuantity) { <p class="@ItemColor(i.Status)"><strong>@(i.Quantity - i.OrderItem.CancelledQuantity) &times; @i.OrderItem.ItemNameSnapshot</strong>@if (!string.IsNullOrWhiteSpace(i.NotesSnapshot)) { <span> &middot; @i.NotesSnapshot</span> }</p> }
+                @if (i.Quantity > i.OrderItem.CancelledQuantity) { <p class="@ItemColor(i.Status)"><strong>@(i.Quantity - i.OrderItem.CancelledQuantity) &times; <ItemName Value="@i.OrderItem.ItemNameSnapshot" /></strong>@if (!string.IsNullOrWhiteSpace(i.NotesSnapshot)) { <span> &middot; @i.NotesSnapshot</span> }</p> }
                 @if (i.OrderItem.CancelledQuantity > 0)
                 {
-                    <p class="kitchen-cancelled"><del>@i.OrderItem.CancelledQuantity &times; @i.OrderItem.ItemNameSnapshot</del><br /><span>CANCELLED</span>@if (!string.IsNullOrWhiteSpace(i.CancellationReason)) { <span> &middot; @i.CancellationReason</span> }</p>
+                    <p class="kitchen-cancelled"><del>@i.OrderItem.CancelledQuantity &times; <ItemName Value="@i.OrderItem.ItemNameSnapshot" /></del><br /><span>@Text["Cancelled"]</span>@if (!string.IsNullOrWhiteSpace(i.CancellationReason)) { <span> &middot; @i.CancellationReason</span> }</p>
                 }
             }
-            @if (t.Order.Notes.Length > 0) { <p>Order notes: <strong>@t.Order.Notes</strong></p> }
-            @if (t.Status == KitchenStatus.New) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Preparing)">正在准备</button> }
-            @if (t.Status == KitchenStatus.Preparing) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Ready)">完成</button> }
+            @if (t.Order.Notes.Length > 0) { <p>@Text["Order notes:"] <strong>@t.Order.Notes</strong></p> }
+            @if (t.Status == KitchenStatus.New) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Preparing)">@Text["Start preparing"]</button> }
+            @if (t.Status == KitchenStatus.Preparing) { <button disabled="@busy" @onclick="() => Update(t, KitchenStatus.Ready)">@Text["Mark ready"]</button> }
         </section>
     }
     </div>
 }
 @code {
-    private static string StatusLabel(KitchenStatus status) => status switch { KitchenStatus.New => "新", KitchenStatus.Preparing => "正在准备", KitchenStatus.Ready => "完成", _ => status.ToString().ToUpperInvariant() };
+    private string StatusLabel(KitchenStatus status) => Text[status.ToString()];
     private static string ItemColor(KitchenStatus status) => status switch { KitchenStatus.Preparing => "kitchen-preparing", KitchenStatus.Ready => "kitchen-ready", KitchenStatus.Cancelled => "kitchen-cancelled", _ => "kitchen-added" };
     private List<KitchenTicket>? tickets; private string? error; private bool busy;
     private readonly CancellationTokenSource stop = new(); private Task? reconcile;

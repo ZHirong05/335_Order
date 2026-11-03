@@ -1,0 +1,88 @@
+@page "/accounting"
+@attribute [Authorize(Roles = "Admin,Cashier")]
+@rendermode InteractiveServer
+@inject AccountingService Service
+@inject AuthenticationStateProvider Authentication
+@inject ILogger<Accounting> Logger
+<PageTitle>@Text["Accounting"] · 335 Order</PageTitle>
+<div class="flow-heading"><h1>@Text["Accounting"]</h1></div>
+<form class="report-filters" @onsubmit="Load" @onsubmit:preventDefault="true">
+    <label>@Text["Date"]<input type="date" min="2000-01-01" max="9998-12-31" @bind="date" required disabled="@(busy || pending != null)" /></label>
+    <button disabled="@(busy || loading || pending != null)">@Text["Apply"]</button>
+</form>
+<p class="muted">@Text["Reports use Malaysia time and actual payments, including split payments. Change is excluded."]</p>
+@if (error != null) { <p class="notice error" role="alert">@error</p> }
+@if (success != null) { <p class="notice" role="status">@success</p> }
+@if (loading) { <p role="status">@Text["Loading..."]</p> }
+@if (day != null)
+{
+    <div class="report-summary">
+        <div class="card"><span>@Text["Total purchases"]</span><strong>RM @day.Spending.ToString("0.00")</strong></div>
+        <div class="card"><span>@Text["Sales received"]</span><strong>RM @day.Sales.ToString("0.00")</strong></div>
+        <div class="card"><span>@Text["Sales less purchases"]</span><strong>RM @((day.Sales - day.Spending).ToString("0.00"))</strong><small>@Text["This is a cash comparison, not net profit."]</small></div>
+    </div>
+    <div class="accounting-columns">
+        <section class="card purchase-panel">
+            <h2>@Text["Purchases"] · @day.Date.ToString("yyyy-MM-dd")</h2>
+            <form @onsubmit="Save" @onsubmit:preventDefault="true">
+                <label>@Text["Purchase description"]<input required maxlength="200" placeholder="@Text["For example: ice bag, vegetables"]" @bind="description" disabled="@(busy || pending != null)" /></label>
+                <label>@Text["Amount (RM)"]<input type="number" required min="0.01" max="999999999" step="0.01" @bind="amount" disabled="@(busy || pending != null)" /></label>
+                <button type="submit" disabled="@(busy || loading)">@(busy ? Text["Saving..."] : Text["Save purchase"])</button>
+            </form>
+            @if (day.Expenses.Count == 0) { <p class="empty-panel">@Text["No purchases recorded for this date."]</p> }
+            else
+            {
+                <div class="report-table"><table><thead><tr><th>@Text["Description"]</th><th>@Text["Amount"] (RM)</th></tr></thead><tbody>
+                    @foreach (var expense in day.Expenses) { <tr><td>@expense.Description</td><td>@expense.Amount.ToString("0.00")</td></tr> }
+                </tbody></table></div>
+            }
+        </section>
+        <section class="card daily-sales-panel">
+            <h2>@Text["Daily sales"] · @day.Date.ToString("yyyy-MM-dd")</h2>
+            @if (day.Bills.Count == 0) { <p class="empty-panel">@Text["No payments received for this date."]</p> }
+            else
+            {
+                <div class="report-table"><table><thead><tr><th>@Text["Bill"]</th><th>@Text["Last payment"]</th><th>@Text["Destination"]</th><th>@Text["Status"]</th><th>@Text["Method"]</th><th>@Text["Bill total"] (RM)</th><th>@Text["Received today"] (RM)</th><th>@Text["Total paid"] (RM)</th></tr></thead><tbody>
+                    @foreach (var bill in day.Bills)
+                    {
+                        <tr><td><strong>@bill.DisplayNumber</strong><small>@Text["Order date"] @bill.OrderBusinessDate</small></td><td>@AccountingService.LocalDate(bill.LastPaymentUtc).ToString("yyyy-MM-dd")<br />@bill.LastPaymentUtc.AddHours(8).ToString("HH:mm")</td><td>@(bill.TableNumber.HasValue ? $"{Text["Table"]} {bill.TableNumber}" : Text["Takeaway"])</td><td>@Text.Status(bill.Status)</td><td>@string.Join(", ", bill.Methods.Select(Text.Payment))</td><td>@bill.BillTotal.ToString("0.00")</td><td><strong>@bill.ReceivedInPeriod.ToString("0.00")</strong></td><td>@bill.TotalPaid.ToString("0.00")</td></tr>
+                    }
+                </tbody></table></div>
+            }
+        </section>
+    </div>
+}
+@code {
+    private DateTime date;
+    private AccountingDay? day;
+    private string description = "";
+    private decimal? amount;
+    private string? error, success;
+    private bool busy, loading;
+    private ExpenseInput? pending;
+    protected override async Task OnInitializedAsync() { date = Service.Today.ToDateTime(TimeOnly.MinValue); await Load(); }
+    private async Task Load()
+    {
+        if (busy) return;
+        loading = true; error = null; success = null;
+        try { day = await Service.Day(DateOnly.FromDateTime(date)); }
+        catch (Exception ex) { day = null; error = Text["Could not load data. Please try again."]; Logger.LogError(ex, "Accounting load failed"); }
+        finally { loading = false; }
+    }
+    private async Task Save()
+    {
+        if (busy || day == null) return;
+        busy = true; error = null; success = null;
+        try
+        {
+            var actor = (await Authentication.GetAuthenticationStateAsync()).User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            pending ??= new(Guid.NewGuid(), day.Date, description, amount ?? 0m);
+            await Service.RecordExpense(pending, actor);
+            pending = null; description = ""; amount = null;
+            day = await Service.Day(day.Date); success = Text["Purchase saved."];
+        }
+        catch (BusinessException ex) { pending = null; error = Text.Pick(ex.Message, "请填写有效采购内容、正数金额及不晚于今天的日期。"); }
+        catch (Exception ex) { Logger.LogError(ex, "Expense save failed"); error = Text["Could not save. Retry with the same details."]; }
+        finally { busy = false; }
+    }
+}

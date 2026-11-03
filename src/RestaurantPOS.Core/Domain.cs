@@ -37,6 +37,7 @@ public sealed class DiningTable
 }
 public sealed class MenuCategory
 {
+    public bool IsBeverage { get; set; }
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public int SortOrder { get; set; }
@@ -53,6 +54,31 @@ public sealed class MenuItem
     public bool IsAvailable { get; set; } = true;
     public int SortOrder { get; set; }
     public List<MenuItemVariation> Variations { get; set; } = [];
+    public List<MenuOptionGroup> OptionGroups { get; set; } = [];
+}
+public sealed class MenuOptionGroup
+{
+    public int Id { get; set; }
+    public int MenuItemId { get; set; }
+    public string Name { get; set; } = "";
+    public int SortOrder { get; set; }
+    public List<MenuOption> Options { get; set; } = [];
+}
+public sealed class MenuOption
+{
+    public bool IsDefault { get; set; }
+    public int Id { get; set; }
+    public int MenuOptionGroupId { get; set; }
+    public string Name { get; set; } = "";
+    public decimal AdditionalPrice { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsAvailable { get; set; } = true;
+}
+public sealed class MenuCatalogImport
+{
+    public string Key { get; set; } = "";
+    public string SourceSha256 { get; set; } = "";
+    public DateTime AppliedAtUtc { get; set; } = DateTime.UtcNow;
 }
 public sealed class MenuItemVariation
 {
@@ -132,7 +158,7 @@ public sealed class RequestRecord
     public string RequestHash { get; set; } = "";
     public Guid OrderId { get; set; }
 }
-public record ItemInput(int MenuItemId, int Quantity, string Notes = "", int? VariationId = null);
+public record ItemInput(int MenuItemId, int Quantity, string Notes = "", int? VariationId = null, List<int>? OptionIds = null);
 public record CreateOrderInput(OrderType OrderType, int? TableId, string Notes, List<ItemInput> Items, string IdempotencyKey);
 public record AddItemsInput(long Version, List<ItemInput> Items, string IdempotencyKey);
 public record CancelInput(long Version, int Quantity, string Reason = "");
