@@ -6,9 +6,20 @@
 <PageTitle>@Text["Statistics"] · 335 Order</PageTitle>
 <div class="flow-heading"><h1>@Text["Statistics"]</h1></div>
 <form class="report-filters" @onsubmit="Load" @onsubmit:preventDefault="true">
-    <label>@Text["Period"]<select @bind="period"><option value="@ReportPeriod.Day">@Text["Day"]</option><option value="@ReportPeriod.Month">@Text["Month"]</option><option value="@ReportPeriod.Year">@Text["Year"]</option></select></label>
-    <label>@Text["Date"]<input type="date" min="2000-01-01" max="9998-12-31" @bind="date" required /></label>
-    <label>@Text["Category"]<select @bind="group"><option value="@ProductGroup.All">@Text["All"]</option><option value="@ProductGroup.Food">@Text["Food"]</option><option value="@ProductGroup.Beverage">@Text["Beverages"]</option></select></label>
+    <label>@Text["Period"]<select @bind="period" @bind:after="PeriodChanged" disabled="@loading"><option value="@ReportPeriod.Day">@Text["Day"]</option><option value="@ReportPeriod.Month">@Text["Month"]</option><option value="@ReportPeriod.Year">@Text["Year"]</option></select></label>
+    @if (period == ReportPeriod.Day)
+    {
+        <label>@Text["Date"]<input type="date" min="2000-01-01" max="9998-12-31" @bind="date" required disabled="@loading" /></label>
+    }
+    else if (period == ReportPeriod.Month)
+    {
+        <label>@Text["Month"]<input type="month" min="2000-01" max="9998-12" @bind="date" @bind:format="yyyy-MM" required disabled="@loading" /></label>
+    }
+    else
+    {
+        <label>@Text["Year"]<select @bind="SelectedYear" disabled="@loading">@foreach (var year in Service.ReportYears) { <option value="@year">@year</option> }</select></label>
+    }
+    <label>@Text["Category"]<select @bind="group" disabled="@loading"><option value="@ProductGroup.All">@Text["All"]</option><option value="@ProductGroup.Food">@Text["Food"]</option><option value="@ProductGroup.Beverage">@Text["Beverages"]</option></select></label>
     <button disabled="@loading">@Text["Apply"]</button>
 </form>
 <p class="muted">@Text["Reports use Malaysia time and actual payments, including split payments. Change is excluded."]</p>
@@ -22,7 +33,9 @@
         <div class="card"><span>@Text["Bills paid towards"]</span><strong>@report.BillCount</strong><small>@Text["Payments"]: @report.PaymentCount</small></div>
         <div class="card"><span>@Text["Total purchases"]</span><strong>RM @report.Expenses.ToString("0.00")</strong></div>
     </div>
-    <section class="card"><h2>@Text["Sales trend"]</h2>
+    @if (shownPeriod != ReportPeriod.Day)
+    {
+    <section class="card sales-trend-panel"><h2>@Text["Sales trend"]</h2>
         @if (report.Revenue == 0) { <p class="empty-panel">@Text["No sales in this period."]</p> }
         <div class="sales-chart" aria-label="@Text["Sales trend"]">
             @foreach (var bucket in report.Buckets)
@@ -31,6 +44,7 @@
             }
         </div>
     </section>
+    }
     <section class="card"><h2>@Text["Top selling items"] · @Text[shownGroup.ToString() == "Beverage" ? "Beverages" : shownGroup.ToString()]</h2>
         <p class="muted">@Text["Ranked by revenue; quantities include paid items only."]</p>
         @if (report.Products.Count == 0) { <p class="empty-panel">@Text["No paid items in this category."]</p> }
@@ -49,16 +63,24 @@
 @code {
     private DateTime date;
     private ReportPeriod period = ReportPeriod.Day;
+    private ReportPeriod shownPeriod = ReportPeriod.Day;
+    private int SelectedYear { get => date.Year; set => date = new DateTime(value, 1, 1); }
     private ProductGroup group, shownGroup;
     private SalesReport? report;
     private bool loading;
     private string? error;
     protected override async Task OnInitializedAsync() { date = Service.Today.ToDateTime(TimeOnly.MinValue); await Load(); }
+    private async Task PeriodChanged()
+    {
+        if (period == ReportPeriod.Year && !Service.ReportYears.Contains(date.Year)) SelectedYear = Math.Clamp(date.Year, Service.ReportYears[0], Service.ReportYears[^1]);
+        await Load();
+    }
     private async Task Load()
     {
         if (loading) return;
         loading = true; error = null;
-        try { report = await Service.Statistics(DateOnly.FromDateTime(date), period, group); shownGroup = group; }
+        var selectedPeriod = period; var selectedGroup = group;
+        try { report = await Service.Statistics(DateOnly.FromDateTime(date), selectedPeriod, selectedGroup); shownGroup = selectedGroup; shownPeriod = selectedPeriod; }
         catch (Exception ex) { report = null; error = Text["Could not load data. Please try again."]; Logger.LogError(ex, "Statistics load failed"); }
         finally { loading = false; }
     }

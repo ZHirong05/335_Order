@@ -65,7 +65,7 @@
     }
     else if (step == OrderStep.Actions && existingBill != null)
     {
-        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>@Text["Continue an order"]</span></div>
+        <div class="order-context"><strong>@Text.Destination(destination) &middot; @existingBill.DisplayNumber</strong><span>@Text["Continue an order"]</span></div>
         @if ((existingBill.Payments?.Count ?? 0) > 0)
         {
             <div class="notice">@Text["A payment has been recorded. Complete the remaining balance before closing this order."]</div>
@@ -84,7 +84,7 @@
     }
     else if (step == OrderStep.Cancel && existingBill != null)
     {
-        <div class="order-context"><strong>@destination &middot; @existingBill.DisplayNumber</strong><span>@Text["Cancel Item"]</span></div>
+        <div class="order-context"><strong>@Text.Destination(destination) &middot; @existingBill.DisplayNumber</strong><span>@Text["Cancel Item"]</span></div>
         <p class="muted">@Text["Select the items to cancel. Quantities cannot exceed what remains in the order."]</p>
         @foreach (var item in existingBill.Items.Where(i => i.Quantity > 0))
         {
@@ -98,13 +98,17 @@
     }
     else
     {
-        <div class="order-context"><strong>@destination @existingBill?.DisplayNumber</strong><span>@(targetOrderId.HasValue ? Text["Adding items to an existing order"] : Text["New order"])</span></div>
+        <div class="order-context"><strong>@Text.Destination(destination) @existingBill?.DisplayNumber</strong><span>@(targetOrderId.HasValue ? Text["Adding items to an existing order"] : Text["New order"])</span></div>
         <div class="ordering-layout">
             <section aria-label="Menu">
+                <div class="menu-section-tabs" role="group" aria-label="@Text.Pick("Food or drinks", "食物或饮料")">
+                    <button class="menu-section-button @(beverageSection == false ? "is-selected" : "")" aria-pressed="@(beverageSection == false ? "true" : "false")" disabled="@busy" @onclick="() => ChooseMenuSection(false)">@Text.Pick("Food", "食物")</button>
+                    <button class="menu-section-button @(beverageSection == true ? "is-selected" : "")" aria-pressed="@(beverageSection == true ? "true" : "false")" disabled="@busy" @onclick="() => ChooseMenuSection(true)">@Text.Pick("Drinks", "饮料")</button>
+                </div>
                 <label class="menu-search">@Text["Search food or drinks"]<input type="search" placeholder="Search the menu…" @bind="search" @bind:event="oninput" /></label>
                 <div class="category-tabs" aria-label="Menu categories">
                     <button class="category-tab @(categoryId == 0 ? "is-selected" : "")" aria-pressed="@(categoryId == 0 ? "true" : "false")" @onclick="() => categoryId = 0">@Text["All"]</button>
-                    @foreach (var group in menu.GroupBy(m => m.CategoryId))
+                    @foreach (var group in SectionMenu.GroupBy(m => m.CategoryId))
                     {
                         <button class="category-tab @(categoryId == group.Key ? "is-selected" : "")" aria-pressed="@(categoryId == group.Key ? "true" : "false")" @onclick="() => categoryId = group.Key">@Text[group.First().Category.Name]</button>
                     }
@@ -195,6 +199,7 @@
     private readonly List<CartLine> cart = [];
     private OrderType type = OrderType.Takeaway;
     private int tableId, categoryId;
+    private bool beverageSection;
     private Guid? targetOrderId;
     private string destination = "", search = "", notes = "";
     private bool busy, initialized;
@@ -235,7 +240,13 @@
         catch (OperationCanceledException) { }
     }
     public async ValueTask DisposeAsync() { disposed = true; Notifications.Changed -= OrderChanged; reconciliationStop.Cancel(); if (reconciliation != null) await reconciliation; reconciliationStop.Dispose(); }
-    private IEnumerable<MenuItem> FilteredMenu => menu?.Where(m => (categoryId == 0 || m.CategoryId == categoryId) && m.Name.Contains(search, StringComparison.OrdinalIgnoreCase)) ?? [];
+    private IEnumerable<MenuItem> SectionMenu => menu?.Where(m => m.Category.IsBeverage == beverageSection) ?? [];
+    private IEnumerable<MenuItem> FilteredMenu => SectionMenu.Where(m => (categoryId == 0 || m.CategoryId == categoryId) && m.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+    private void ChooseMenuSection(bool beverages)
+    {
+        if (beverageSection == beverages) return;
+        beverageSection = beverages; categoryId = 0; search = "";
+    }
     private decimal PickerPrice => (selected?.Price ?? 0m) + (selected?.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.AdditionalPrice ?? 0m)
         + (selected?.OptionGroups.SelectMany(g => g.Options).Where(o => selectedOptions.Values.Contains(o.Id)).Sum(o => o.AdditionalPrice) ?? 0m);
     private bool PickerReady => selected != null && (selected.Variations.Count == 0 || selectedVariationId.HasValue)
@@ -245,6 +256,7 @@
         if (initialized && loadedId == Id) return;
         initialized = true; loadedId = Id; targetOrderId = Id;
         cart.Clear(); notes = ""; key = Guid.NewGuid().ToString(); selected = null;
+        beverageSection = false; categoryId = 0; search = "";
         step = Id.HasValue ? OrderStep.Actions : OrderStep.Type;
         await Reload();
     }
@@ -259,7 +271,7 @@
             menu = await Service.Menu(); active = await Service.Active(); tables = await Service.Tables();
             if (targetOrderId.HasValue)
             {
-                existingBill = await Service.Bill(targetOrderId.Value); version = existingBill.Version; destination = Text.Destination(existingBill.Destination);
+                existingBill = await Service.Bill(targetOrderId.Value); version = existingBill.Version; destination = existingBill.Destination;
                 var current = active.FirstOrDefault(o => o.Id == targetOrderId);
                 if (current == null) throw new BusinessException("This order is no longer active.");
                 type = current.OrderType; tableId = current.TableId ?? 0;
@@ -272,11 +284,11 @@
     private void ChooseType(OrderType value)
     {
         type = value; targetOrderId = null; existingBill = null; tableId = 0; success = null;
-        destination = Text["Take away"]; step = value == OrderType.Takeaway ? OrderStep.Food : OrderStep.Table;
+        destination = "Take away"; step = value == OrderType.Takeaway ? OrderStep.Food : OrderStep.Table;
     }
     private async Task ChooseTable(DiningTable table)
     {
-        type = OrderType.DineIn; tableId = table.Id; destination = $"{Text["Table"]} {table.Number}";
+        type = OrderType.DineIn; tableId = table.Id; destination = $"Table {table.Number}";
         var existing = active.FirstOrDefault(o => o.TableId == table.Id);
         targetOrderId = existing?.Id; version = existing?.Version ?? 0; success = null;
         step = existing == null ? OrderStep.Food : OrderStep.Actions;
@@ -285,7 +297,7 @@
     private void ClearDraft()
     {
         cart.Clear(); notes = ""; selected = null; key = Guid.NewGuid().ToString();
-        search = ""; categoryId = 0;
+        search = ""; categoryId = 0; beverageSection = false;
         cancelSelections.Clear(); cancelReason = ""; cancelKey = Guid.NewGuid().ToString();
     }
     private async Task Back()

@@ -122,7 +122,14 @@ else if (bill != null)
     private readonly CancellationTokenSource stop = new();
     private Task? reconciliation;
     protected override void OnInitialized() { Notifications.Changed += Changed; reconciliation = Poll(); }
-    protected override async Task OnParametersSetAsync() { message = null; bill = null; paymentConfirmed = false; splitRequest = null; checkoutRequest = null; selectedItems.Clear(); checkoutKey = Guid.NewGuid().ToString(); await Load(); }
+    private bool parametersInitialized;
+    private Guid? loadedId;
+    protected override async Task OnParametersSetAsync()
+    {
+        if (parametersInitialized && loadedId == Id) return;
+        parametersInitialized = true; loadedId = Id;
+        message = null; bill = null; paymentConfirmed = false; splitRequest = null; checkoutRequest = null; selectedItems.Clear(); checkoutKey = Guid.NewGuid().ToString(); await Load();
+    }
     private async Task Load()
     {
         loading = true;

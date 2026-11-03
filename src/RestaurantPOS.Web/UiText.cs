@@ -1,9 +1,15 @@
 namespace RestaurantPOS.Web;
 
-// A browser preference, captured once per request/circuit. A language change reloads the page.
+// Browser preference, also mutable inside the live circuit without navigation.
 public sealed class UiText(IHttpContextAccessor accessor)
 {
-    public bool Chinese { get; } = accessor.HttpContext?.Request.Cookies["335.language"] == "zh";
+    public bool Chinese { get; private set; } = accessor.HttpContext?.Request.Cookies["335.language"] == "zh";
+    public event Action? Changed;
+    public void SetLanguage(bool chinese)
+    {
+        if (Chinese == chinese) return;
+        Chinese = chinese; Changed?.Invoke();
+    }
     public string this[string english] => Chinese && Translations.TryGetValue(english, out var value) ? value : english;
     public string Pick(string english, string chinese) => Chinese ? chinese : english;
     public string Payment(string method) => this[method];

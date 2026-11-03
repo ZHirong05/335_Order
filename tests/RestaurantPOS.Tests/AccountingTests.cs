@@ -118,6 +118,15 @@ public sealed class AccountingTests : IAsyncLifetime
         Assert.Equal(id, Assert.Single(day.Bills).OrderId); Assert.Equal(0m, day.Sales);
         Assert.Equal(0m, day.Bills.Single().BillTotal);
     }
+    [Theory]
+    [InlineData("2026-12-31T15:59:59Z", 2026)]
+    [InlineData("2026-12-31T16:00:00Z", 2027)]
+    public void YearChoicesExpandAtMalaysiaNewYearWithoutOfferingFutureYears(string utc, int currentYear)
+    {
+        var service = new AccountingService(factory, new FixedClock(DateTimeOffset.Parse(utc)));
+        Assert.Equal(Enumerable.Range(2026, currentYear - 2026 + 1), service.ReportYears);
+    }
+    private sealed class FixedClock(DateTimeOffset now) : TimeProvider { public override DateTimeOffset GetUtcNow() => now; }
     private sealed class Clock : TimeProvider { public override DateTimeOffset GetUtcNow() => new(2026, 11, 3, 4, 0, 0, TimeSpan.Zero); }
     private sealed class Events : IBusinessEvents { public Task Publish(BusinessEvent e) => Task.CompletedTask; }
     private sealed class Factory(DbContextOptions<PosDb> options) : IDbContextFactory<PosDb> { public PosDb CreateDbContext() => new(options); }

@@ -156,6 +156,10 @@ public sealed class WebTests
         response = await client.PostAsync("/language", new FormUrlEncodedContent(new Dictionary<string, string> { ["language"] = "en", ["returnUrl"] = "//example.com", ["__RequestVerificationToken"] = token }));
         Assert.Equal("/dashboard", response.Headers.Location!.OriginalString);
         Assert.Contains("Daily sales", await client.GetStringAsync("/accounting"));
+        client.DefaultRequestHeaders.Add("X-InPlace-Language", "true");
+        response = await client.PostAsync("/language", new FormUrlEncodedContent(new Dictionary<string, string> { ["language"] = "zh", ["returnUrl"] = "/order", ["__RequestVerificationToken"] = token }));
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode); Assert.Null(response.Headers.Location);
+        Assert.Contains("采购开销", WebUtility.HtmlDecode(await client.GetStringAsync("/accounting")));
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsync("/language", new FormUrlEncodedContent(new Dictionary<string, string> { ["language"] = "zh" }))).StatusCode);
     }
     private sealed record Token(string token);

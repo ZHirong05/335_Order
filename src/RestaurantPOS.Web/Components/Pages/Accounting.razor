@@ -42,10 +42,10 @@
             @if (day.Bills.Count == 0) { <p class="empty-panel">@Text["No payments received for this date."]</p> }
             else
             {
-                <div class="report-table"><table><thead><tr><th>@Text["Bill"]</th><th>@Text["Last payment"]</th><th>@Text["Destination"]</th><th>@Text["Status"]</th><th>@Text["Method"]</th><th>@Text["Bill total"] (RM)</th><th>@Text["Received today"] (RM)</th><th>@Text["Total paid"] (RM)</th></tr></thead><tbody>
+                <div class="report-table"><table><thead><tr><th>@Text["Bill"]</th><th>@Text["Destination"]</th><th>@Text["Method"]</th><th>@Text["Received today"] (RM)</th></tr></thead><tbody>
                     @foreach (var bill in day.Bills)
                     {
-                        <tr><td><strong>@bill.DisplayNumber</strong><small>@Text["Order date"] @bill.OrderBusinessDate</small></td><td>@AccountingService.LocalDate(bill.LastPaymentUtc).ToString("yyyy-MM-dd")<br />@bill.LastPaymentUtc.AddHours(8).ToString("HH:mm")</td><td>@(bill.TableNumber.HasValue ? $"{Text["Table"]} {bill.TableNumber}" : Text["Takeaway"])</td><td>@Text.Status(bill.Status)</td><td>@string.Join(", ", bill.Methods.Select(Text.Payment))</td><td>@bill.BillTotal.ToString("0.00")</td><td><strong>@bill.ReceivedInPeriod.ToString("0.00")</strong></td><td>@bill.TotalPaid.ToString("0.00")</td></tr>
+                        <tr><td><strong>@bill.DisplayNumber</strong><small>@bill.LastPaymentUtc.AddHours(8).ToString("HH:mm")</small>@if (bill.OrderBusinessDate != day.Date.ToString("yyyy-MM-dd")) { <small>@bill.OrderBusinessDate</small> }</td><td>@(bill.TableNumber.HasValue ? $"{Text["Table"]} {bill.TableNumber}" : Text["Takeaway"])@if (bill.Status != OrderStatus.Closed) { <small>@Text.Status(bill.Status)</small> }</td><td>@string.Join(", ", bill.Methods.Select(Text.Payment))</td><td><strong>@bill.ReceivedInPeriod.ToString("0.00")</strong></td></tr>
                     }
                 </tbody></table></div>
             }

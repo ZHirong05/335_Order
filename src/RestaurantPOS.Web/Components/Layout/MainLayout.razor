@@ -3,6 +3,7 @@
 @inject IWebHostEnvironment Environment
 @inject IConfiguration Configuration
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 <div class="page">
     <div class="sidebar">
         <a class="brand" href="/dashboard" aria-label="335 Food Gallery home">
@@ -26,20 +27,36 @@
         <div class="top-row">
             <img class="header-title" src="@Assets["images/335-title.png"]" alt="335 美食阁 · Three Three Five Food Gallery" width="420" height="155" />
             <div class="header-tools">
-                <form method="post" action="/language">
+                <form method="post" action="/language" @ref="languageForm" @onsubmit="ToggleLanguage" @onsubmit:preventDefault="true">
                     <AntiforgeryToken />
                     <input type="hidden" name="language" value="@(Text.Chinese ? "en" : "zh")" />
                     <input type="hidden" name="returnUrl" value="@("/" + Nav.ToBaseRelativePath(Nav.Uri))" />
-                    <button type="submit" class="secondary-button language-toggle" aria-label="@(Text.Chinese ? "Switch to English" : "切换中文")">@(Text.Chinese ? "English" : "中文")</button>
+                    <button type="submit" class="secondary-button language-toggle" disabled="@languageBusy" aria-label="@(Text.Chinese ? "Switch to English" : "切换中文")">@(Text.Chinese ? "English" : "中文")</button>
                 </form>
             </div>
         </div>
 
         <article class="content">
+            @if (languageError != null) { <p class="notice error" role="alert">@languageError</p> }
             @Body
         </article>
     </main>
 </div>
+@code {
+    [CascadingParameter(Name = "UiLanguage")] public bool UiLanguage { get; set; }
+    private ElementReference languageForm;
+    private bool languageBusy;
+    private string? languageError;
+    private async Task ToggleLanguage()
+    {
+        if (languageBusy) return;
+        languageBusy = true; languageError = null;
+        var chinese = !Text.Chinese;
+        try { await JS.InvokeVoidAsync("posLanguage.set", languageForm); Text.SetLanguage(chinese); }
+        catch { languageError = Text.Pick("Could not change language. Please try again.", "无法切换语言，请重试。"); }
+        finally { languageBusy = false; }
+    }
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.

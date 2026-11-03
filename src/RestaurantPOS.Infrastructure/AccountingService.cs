@@ -8,6 +8,7 @@ public sealed class AccountingService(IDbContextFactory<PosDb> factory, TimeProv
 {
     private static readonly TimeZoneInfo Zone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Kuala_Lumpur");
     public DateOnly Today => LocalDate((clock ?? TimeProvider.System).GetUtcNow().UtcDateTime);
+    public IReadOnlyList<int> ReportYears => Enumerable.Range(2026, Math.Max(1, Today.Year - 2026 + 1)).ToArray();
     public static DateOnly LocalDate(DateTime utc) => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), Zone));
     private static DateTime Utc(DateOnly date) => TimeZoneInfo.ConvertTimeToUtc(date.ToDateTime(TimeOnly.MinValue), Zone);
     public async Task<Guid> RecordExpense(ExpenseInput input, string actor)

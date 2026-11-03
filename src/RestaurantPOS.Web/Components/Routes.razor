@@ -1,4 +1,6 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+@implements IDisposable
+<CascadingValue Name="UiLanguage" Value="Text.Chinese">
+<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
             <NotAuthorized><p>You need an authorized account. <a href="/login">@Text["Sign in"]</a>.</p></NotAuthorized>
@@ -6,3 +8,9 @@
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
+</CascadingValue>
+@code {
+    protected override void OnInitialized() => Text.Changed += LanguageChanged;
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Text.Changed -= LanguageChanged;
+}

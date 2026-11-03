@@ -17,6 +17,7 @@ public static class Endpoints
             if (language is not ("en" or "zh")) return Results.BadRequest();
             c.Response.Cookies.Append("335.language", language, new CookieOptions { HttpOnly = true, IsEssential = true,
                 SameSite = SameSiteMode.Lax, Secure = c.Request.IsHttps, MaxAge = TimeSpan.FromDays(365), Path = "/" });
+            if (c.Request.Headers["X-InPlace-Language"] == "true") return Results.NoContent();
             var target = form["returnUrl"].ToString();
             if (!target.StartsWith('/') || target.StartsWith("//") || target.Contains('\\')) target = "/dashboard";
             return Results.LocalRedirect(target);
