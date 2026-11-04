@@ -21,7 +21,7 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
         var until = from.AddDays(1);
         await using var db = await factory.CreateDbContextAsync();
         return await db.Orders.AsNoTracking().Include(x => x.Table).Include(x => x.Items)
-            .Where(x => x.Status == OrderStatus.Closed)
+            .Where(x => x.Status == OrderStatus.Closed && !db.Events.Any(e => e.OrderId == x.Id && e.EventType == "BillDeleted"))
             .Select(x => new { Order = x, SettledAt = db.Events.Where(e => e.OrderId == x.Id && e.EventType == "OrderClosed").Max(e => (DateTime?)e.CreatedAtUtc)
                 ?? db.Payments.Where(p => p.OrderId == x.Id).Max(p => (DateTime?)p.ReceivedAtUtc) ?? x.UpdatedAtUtc })
             .Where(x => x.SettledAt >= from && x.SettledAt < until)
@@ -30,7 +30,7 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
     public async Task<Bill> Bill(Guid id)
     {
         await using var db = await factory.CreateDbContextAsync();
-        var o = await db.Orders.AsNoTracking().Include(x => x.Table).Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == id) ?? throw new BusinessException("Order not found", 404);
+        var o = await db.Orders.AsNoTracking().Include(x => x.Table).Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == id && !db.Events.Any(e => e.OrderId == x.Id && e.EventType == "BillDeleted")) ?? throw new BusinessException("Order not found", 404);
         var recorded = await db.Payments.AsNoTracking().Include(p => p.Allocations).ThenInclude(a => a.OrderItem)
             .Where(x => x.OrderId == id).OrderBy(x => x.ReceivedAtUtc).ThenBy(x => x.Id).ToListAsync();
         var paidQuantities = recorded.SelectMany(p => p.Allocations).GroupBy(a => a.OrderItemId).ToDictionary(g => g.Key, g => g.Sum(a => a.Quantity));
@@ -44,7 +44,7 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
     public async Task<List<KitchenTicket>> Tickets()
     {
         await using var db = await factory.CreateDbContextAsync();
-        return await db.Tickets.AsNoTracking().Include(x => x.Order).ThenInclude(x => x.Table).Include(x => x.Items).ThenInclude(x => x.OrderItem).Where(x => x.Order.Status != OrderStatus.Closed || x.Status == KitchenStatus.New || x.Status == KitchenStatus.Preparing).OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id).ToListAsync();
+        return await db.Tickets.AsNoTracking().Include(x => x.Order).ThenInclude(x => x.Table).Include(x => x.Items).ThenInclude(x => x.OrderItem).Where(x => !db.Events.Any(e => e.OrderId == x.OrderId && e.EventType == "BillDeleted") && (x.Order.Status != OrderStatus.Closed || x.Status == KitchenStatus.New || x.Status == KitchenStatus.Preparing)).OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id).ToListAsync();
     }
     public Task<Guid> Create(CreateOrderInput input, string actor) => Write(actor, input.IdempotencyKey, input, async db =>
     {
@@ -117,6 +117,17 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
         if (input.Status == KitchenStatus.Ready) t.CompletedAtUtc = DateTime.UtcNow;
         return (o, "KitchenTicketUpdated", (object)new { TicketId = id, input.Status });
     });
+    public Task<Guid> DeleteSettledBill(Guid id, DeleteBillInput input, string actor)
+    {
+        RequireKey(input.IdempotencyKey);
+        return Write(actor, input.IdempotencyKey, new { Operation = "DeleteSettledBill", id, input }, async db =>
+        {
+            var order = await Load(db, id, input.Version, allowClosed: true);
+            if (order.Status != OrderStatus.Closed) throw new BusinessException("Only settled bills can be deleted");
+            var payments = await db.Payments.Where(p => p.OrderId == id).ToListAsync();
+            return (order, "BillDeleted", (object)new { order.DisplayNumber, Amount = payments.Sum(p => p.Amount), PaymentIds = payments.Select(p => p.Id).ToArray() });
+        });
+    }
     public Task<Guid> Checkout(Guid id, CheckoutInput input, string actor)
     {
         RequireKey(input.IdempotencyKey);
@@ -182,7 +193,7 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
     private static bool ValidMoney(decimal amount) => amount >= 0 && amount <= 999999999m && decimal.Round(amount, 2) == amount;
     private static async Task<Order> Load(PosDb db, Guid id, long version, bool allowClosed = false)
     {
-        var o = await db.Orders.SingleOrDefaultAsync(x => x.Id == id) ?? throw new BusinessException("Order not found", 404);
+        var o = await db.Orders.SingleOrDefaultAsync(x => x.Id == id && !db.Events.Any(e => e.OrderId == x.Id && e.EventType == "BillDeleted")) ?? throw new BusinessException("Order not found", 404);
         if ((!allowClosed && o.Status == OrderStatus.Closed) || o.Version != version) throw new BusinessException("Order changed or is closed. Reload and retry.");
         o.Version++; o.UpdatedAtUtc = DateTime.UtcNow;
         return o;

@@ -52,7 +52,13 @@ else if (bill != null)
         }
         @if (bill.Status == OrderStatus.Closed) { <p class="settled-label">@Text["CLOSED · Balance settled"]</p> }
     </article>
-    @if (bill.Status == OrderStatus.Closed) { <div class="bill-actions no-print"><button @onclick="Print">@Text["Print bill"]</button></div> }
+    @if (bill.Status == OrderStatus.Closed)
+    {
+        <div class="bill-actions no-print">
+            <AuthorizeView Roles="Admin,Cashier"><button class="delete-bill-button" disabled="@busy" @onclick="DeleteBill">@Text["Delete bill"]</button></AuthorizeView>
+            <button class="settled-print-button" @onclick="Print">@Text["Print bill"]</button>
+        </div>
+    }
     @if (bill.Status != OrderStatus.Closed && !paymentConfirmed)
     {
         <AuthorizeView Roles="Admin,Cashier">
@@ -165,6 +171,24 @@ else if (bill != null)
     }
     private static string LocalTime(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(utc, TimeZoneInfo.FindSystemTimeZoneById("Asia/Kuala_Lumpur")).ToString("dd MMM, HH:mm");
     private async Task Print() => await JS.InvokeVoidAsync("window.print");
+    private DeleteBillInput? deleteRequest;
+    private async Task DeleteBill()
+    {
+        if (busy || bill?.Status != OrderStatus.Closed) return;
+        if (!await JS.InvokeAsync<bool>("confirm", $"{Text["Delete bill"]} {bill.DisplayNumber}? {Text["This removes the bill from sales totals. Original records are retained. This does not refund a payment."]}")) return;
+        busy = true;
+        try
+        {
+            var user = (await Authentication.GetAuthenticationStateAsync()).User;
+            if (!(user.IsInRole("Admin") || user.IsInRole("Cashier"))) throw new BusinessException("Cashier permission is required", 403);
+            deleteRequest ??= new(bill.Version, Guid.NewGuid().ToString());
+            await Service.DeleteSettledBill(bill.OrderId, deleteRequest, user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            Nav.NavigateTo("/cashier");
+        }
+        catch (BusinessException ex) { deleteRequest = null; await Load(); message = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Could not delete bill {OrderId}", bill?.OrderId); message = "Could not delete bill. Please retry."; }
+        finally { busy = false; }
+    }
     private void InitializePayment()
     {
         splitRequest = null; checkoutRequest = null; checkoutKey = Guid.NewGuid().ToString();

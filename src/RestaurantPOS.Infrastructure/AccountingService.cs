@@ -40,9 +40,9 @@ public sealed class AccountingService(IDbContextFactory<PosDb> factory, TimeProv
         await using var db = await factory.CreateDbContextAsync();
         await using var tx = await db.Database.BeginTransactionAsync();
         var expenses = await db.Expenses.AsNoTracking().Where(e => e.PurchasedOn == date).OrderByDescending(e => e.CreatedAtUtc).ThenByDescending(e => e.Id).ToListAsync();
-        var payments = await db.Payments.AsNoTracking().Where(p => p.ReceivedAtUtc >= from && p.ReceivedAtUtc < until).ToListAsync();
+        var payments = await db.Payments.AsNoTracking().Where(p => p.ReceivedAtUtc >= from && p.ReceivedAtUtc < until && !db.Events.Any(e => e.OrderId == p.OrderId && e.EventType == "BillDeleted")).ToListAsync();
         // Fully cancelled/free bills close without a synthetic payment row.
-        var zeroCloses = await db.Events.AsNoTracking().Where(e => e.EventType == "OrderClosed" && e.CreatedAtUtc >= from && e.CreatedAtUtc < until && !db.Payments.Any(p => p.OrderId == e.OrderId)).ToListAsync();
+        var zeroCloses = await db.Events.AsNoTracking().Where(e => e.EventType == "OrderClosed" && !db.Events.Any(deleted => deleted.OrderId == e.OrderId && deleted.EventType == "BillDeleted") && e.CreatedAtUtc >= from && e.CreatedAtUtc < until && !db.Payments.Any(p => p.OrderId == e.OrderId)).ToListAsync();
         var ids = payments.Select(p => p.OrderId).Concat(zeroCloses.Select(e => e.OrderId)).Distinct().ToList();
         var orders = await db.Orders.AsNoTracking().Include(o => o.Items).Include(o => o.Table).Where(o => ids.Contains(o.Id)).ToListAsync();
         var allPayments = await db.Payments.AsNoTracking().Where(p => ids.Contains(p.OrderId)).ToListAsync();
@@ -65,7 +65,7 @@ public sealed class AccountingService(IDbContextFactory<PosDb> factory, TimeProv
         await using var db = await factory.CreateDbContextAsync();
         await using var tx = await db.Database.BeginTransactionAsync();
         var payments = await db.Payments.AsNoTracking().Include(p => p.Allocations).ThenInclude(a => a.OrderItem)
-            .Where(p => p.ReceivedAtUtc >= from && p.ReceivedAtUtc < until).ToListAsync();
+            .Where(p => p.ReceivedAtUtc >= from && p.ReceivedAtUtc < until && !db.Events.Any(e => e.OrderId == p.OrderId && e.EventType == "BillDeleted")).ToListAsync();
         var expenses = await db.Expenses.AsNoTracking().Where(e => e.PurchasedOn >= start && e.PurchasedOn < end).ToListAsync();
         var menu = await db.Menu.AsNoTracking().Include(m => m.Category).ToDictionaryAsync(m => m.Id);
         var products = payments.SelectMany(p => p.Allocations).GroupBy(a => new { a.OrderItem.MenuItemId, a.OrderItem.ItemNameSnapshot })

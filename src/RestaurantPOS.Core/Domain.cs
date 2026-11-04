@@ -186,3 +186,5 @@ public sealed class BusinessException(string message, int statusCode = 409) : Ex
 {
     public int StatusCode { get; } = statusCode;
 }
+
+public record DeleteBillInput(long Version, string IdempotencyKey);

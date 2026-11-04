@@ -121,6 +121,16 @@ public sealed class WebTests
         var tables = await cashier.GetFromJsonAsync<List<TableView>>("/api/tables");
         Assert.Equal("Available", tables!.Single(t => t.Id == 2).Status);
         Assert.Contains("CLOSED", await cashier.GetStringAsync($"/cashier/{bill.OrderId}"));
+        Assert.Contains("Delete bill", await cashier.GetStringAsync($"/cashier/{bill.OrderId}"));
+        var deletion = new DeleteBillInput(settled.Version, Guid.NewGuid().ToString());
+        var deleteUrl = $"/api/orders/{bill.OrderId}/delete-bill";
+        Assert.Equal(HttpStatusCode.Forbidden, (await waiter.PostAsJsonAsync(deleteUrl, deletion)).StatusCode);
+        cashier.DefaultRequestHeaders.Remove("RequestVerificationToken");
+        Assert.Equal(HttpStatusCode.BadRequest, (await cashier.PostAsJsonAsync(deleteUrl, deletion)).StatusCode);
+        cashier.DefaultRequestHeaders.Add("RequestVerificationToken", cashierToken.token);
+        Assert.Equal(HttpStatusCode.OK, (await cashier.PostAsJsonAsync(deleteUrl, deletion)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await cashier.PostAsJsonAsync(deleteUrl, deletion)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await cashier.GetAsync(created.Headers.Location!)).StatusCode);
         Assert.Equal(HttpStatusCode.Created, (await waiter.PostAsJsonAsync("/api/orders", request with { IdempotencyKey = Guid.NewGuid().ToString() })).StatusCode);
     }
     [Fact] public async Task AccountingEndpointsRequireRoleAndAntiforgeryAndPersistExpenses()

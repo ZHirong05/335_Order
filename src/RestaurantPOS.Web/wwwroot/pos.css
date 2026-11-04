@@ -346,3 +346,8 @@ textarea:focus-visible { outline:3px solid var(--brand-focus); outline-offset:3p
 .receipt-payment h3 { font-size:18px; }
 @media(max-width:540px) { .checkout-panel { padding:16px; } .split-item-row { flex-wrap:wrap; gap:12px; } .split-item-checkbox { flex-basis:100%; } .split-line-total { margin-left:auto; } }
 @media(max-width:540px) { .order-action-grid { gap:12px; } .order-action-grid .selection-card { padding:16px; } .order-action-grid .selection-card>strong { font-size:20px; } .cancel-selection-row { flex-wrap:wrap; } .cancel-checkbox { flex-basis:100%; } }
+
+.delete-bill-button { background: #b42318; color: #fff8ed; border-color: #b42318; }
+.delete-bill-button:hover { background: #912018; border-color: #912018; }
+.settled-print-button { background: var(--brand-gold); border-color: var(--brand-gold); color: var(--brand-burgundy); }
+.settled-print-button:hover { background: #e6bc1e; border-color: #e6bc1e; }

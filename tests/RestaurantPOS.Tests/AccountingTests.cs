@@ -8,6 +8,44 @@ namespace RestaurantPOS.Tests;
 
 public sealed class AccountingTests : IAsyncLifetime
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DeletedSettledBillsAreExcludedButOriginalRecordsRemain(bool free)
+    {
+        var id = await orders.Create(new(OrderType.Takeaway, null, "", [new(1, 2)], "delete-test-create"), "admin");
+        var bill = await orders.Bill(id);
+        await Assert.ThrowsAsync<BusinessException>(() => orders.DeleteSettledBill(id, new(bill.Version, "delete-open-test"), "admin"));
+        if (free)
+        {
+            await orders.Cancel(id, bill.Items.Single().Id, new(bill.Version, 2), "admin");
+        }
+        else
+        {
+            await orders.SplitPayment(id, new(bill.Version, [new(bill.Items.Single().Id, 1)], 8.5m, PaymentMethod.Cash, 10m, "", "delete-split-test"), "admin");
+        }
+        bill = await orders.Bill(id);
+        await orders.Checkout(id, new(bill.Version, bill.Balance, PaymentMethod.Cash, bill.Balance, "", "delete-close-test"), "admin");
+        bill = await orders.Bill(id);
+        var today = AccountingService.LocalDate(DateTime.UtcNow);
+        Assert.Contains((await reporting.Day(today)).Bills, b => b.OrderId == id);
+        await Assert.ThrowsAsync<BusinessException>(() => orders.DeleteSettledBill(id, new(bill.Version - 1, "delete-stale-test"), "admin"));
+        var input = new DeleteBillInput(bill.Version, "delete-settled-test");
+        await orders.DeleteSettledBill(id, input, "admin");
+        await orders.DeleteSettledBill(id, input, "admin");
+        Assert.Empty((await reporting.Day(today)).Bills);
+        var report = await reporting.Statistics(today, ReportPeriod.Year);
+        Assert.Equal(0m, report.Revenue); Assert.Empty(report.Products);
+        Assert.DoesNotContain(await orders.CashierOrders(), o => o.Id == id);
+        Assert.DoesNotContain(await orders.Active(), o => o.Id == id);
+        Assert.DoesNotContain(await orders.Tickets(), t => t.OrderId == id);
+        await Assert.ThrowsAsync<BusinessException>(() => orders.Bill(id));
+        await using var db = factory.CreateDbContext();
+        Assert.Equal(OrderStatus.Closed, (await db.Orders.SingleAsync(o => o.Id == id)).Status);
+        Assert.Single(await db.Events.Where(e => e.OrderId == id && e.EventType == "BillDeleted").ToListAsync());
+        Assert.Equal(free ? 0 : 2, await db.Payments.CountAsync(p => p.OrderId == id));
+        Assert.Single(await db.OrderItems.Where(i => i.OrderId == id).ToListAsync());
+    }
     private readonly string file = Path.Combine(Path.GetTempPath(), $"335-accounting-{Guid.NewGuid()}.db");
     private Factory factory = null!;
     private AccountingService reporting = null!;

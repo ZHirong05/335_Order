@@ -17,6 +17,9 @@ public sealed class UiText(IHttpContextAccessor accessor)
     public string Status(RestaurantPOS.Core.OrderStatus status) => status == RestaurantPOS.Core.OrderStatus.Closed ? this["Settled"] : this["Partially paid"];
     private static readonly Dictionary<string, string> Translations = new()
     {
+        ["Delete bill"] = "删除账单",
+        ["This removes the bill from sales totals. Original records are retained. This does not refund a payment."] = "此操作会从销售统计中移除账单，原始记录仍会保留，不会实际退款。",
+        ["Could not delete bill. Please retry."] = "无法删除账单，请重试。",
         ["No settled bills today."] = "当天暂无已结账单。",
         ["Included"] = "已含", ["Choose an option in each group."] = "请在每组选项中选择一项。",
         ["Rice & noodles"] = "饭与面", ["Drinks"] = "饮料", ["Standard"] = "标准", ["Regular"] = "普通", ["Large"] = "大份", ["Hot"] = "热", ["Iced"] = "冰",

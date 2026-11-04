@@ -75,6 +75,7 @@ public static class Endpoints
         orders.MapGet("/orders/active", async (OrderService s) => (await s.Active()).Select(x => new { x.Id, x.OrderNumber, x.DisplayNumber, x.BusinessDate, x.TableId, x.OrderType, x.Status, x.Version }));
         orders.MapGet("/orders/{id:guid}", (Guid id, OrderService s) => s.Bill(id));
         orders.MapGet("/orders/{id:guid}/bill", (Guid id, OrderService s) => s.Bill(id));
+        api.MapPost("/orders/{id:guid}/delete-bill", (Guid id, DeleteBillInput i, OrderService s, ClaimsPrincipal u) => s.DeleteSettledBill(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Cashier"));
         api.MapPost("/orders/{id:guid}/checkout", (Guid id, CheckoutInput i, OrderService s, ClaimsPrincipal u) => s.Checkout(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Cashier"));
         api.MapPost("/orders/{id:guid}/split-payments", (Guid id, SplitPaymentInput i, OrderService s, ClaimsPrincipal u) => s.SplitPayment(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Cashier"));
         api.MapPost("/orders/{id:guid}/cancel-items", (Guid id, CancelItemsInput i, OrderService s, ClaimsPrincipal u) => s.CancelItems(id, i, Actor(u))).RequireAuthorization(p => p.RequireRole("Admin", "Waiter"));
