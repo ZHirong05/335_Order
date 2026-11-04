@@ -5,7 +5,7 @@ from decimal import Decimal
 
 parser = argparse.ArgumentParser(description="Build the reviewed Book1 restaurant catalog (standard library only).")
 parser.add_argument('--workbook', type=Path, default=Path(__file__).resolve().parents[1] / 'Book1.xlsx')
-parser.add_argument('--version', default='book1-2026-11-v2', help='Use a NEW version after editing an already imported workbook')
+parser.add_argument('--version', default='book1-2026-11-v3', help='Use a NEW version after editing an already imported workbook')
 args = parser.parse_args()
 workbook_bytes = args.workbook.read_bytes()
 ns = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
@@ -34,7 +34,7 @@ def category(name, beverage=False):
     categories.append(result)
     return result
 def group(name, options):
-    return dict(Name=name, Options=[dict(Name=n, AdditionalPrice=float(p)) for n,p in options])
+    return dict(Name=name, MaxSelections=2 if name=='面类' else 1, Options=[dict(Name=n, AdditionalPrice=float(p)) for n,p in options])
 def add(cat, name, price, sources, groups=None):
     item = dict(Name=name, Price=float(price), SourceRows=sources, Groups=groups or [])
     cat['Items'].append(item)
@@ -46,13 +46,13 @@ def check(item, source, expected, *options):
 noodles = category('粉面类')
 curry = add(noodles, '咖喱面', price(8), [f'食品!{r}' for r in range(8,20)], [
     group('面类', [('面',0),('米粉',0),('河粉',0),('生面',price(9)-price(8))]),
-    group('+', [(n,price(r)-price(8)) for n,r in [('鸡肉',8),('叉烧',10),('花肉',12),('虾水饺（2粒）',14),('虾',16),('烧肉',18)]])])
+    group('配料', [(n,price(r)-price(8)) for n,r in [('鸡肉',8),('叉烧',10),('花肉',12),('虾水饺（2粒）',14),('虾',16),('烧肉',18)]])])
 for meat,row in [('鸡肉',8),('叉烧',10),('花肉',12),('虾水饺（2粒）',14),('虾',16),('烧肉',18)]:
     check(curry, f'食品!L{row}', price(row), '面', meat)
     check(curry, f'食品!L{row+1}', price(row+1), '生面', meat)
 prawn = add(noodles, '虾汤面', price(21), [f'食品!{r}' for r in range(21,31)], [
     group('面类', [('面',0),('米粉',0),('河粉',0),('生面',price(22)-price(21))]),
-    group('+', [(n,price(r)-price(21)) for n,r in [('虾',21),('叉烧',23),('花肉',25),('水饺（2粒）',27),('烧肉',29)]])])
+    group('配料', [(n,price(r)-price(21)) for n,r in [('虾',21),('叉烧',23),('花肉',25),('水饺（2粒）',27),('烧肉',29)]])])
 for meat,row in [('虾',21),('叉烧',23),('花肉',25),('水饺（2粒）',27),('烧肉',29)]:
     check(prawn, f'食品!L{row}', price(row), '面', meat)
     check(prawn, f'食品!L{row+1}', price(row+1), '生面', meat)
@@ -65,23 +65,23 @@ for name,row in [('卤花肉面',33),('冬菇凤爪面（3份）',35),('虾水�
         opts=[n]+(['干'] if len(gs)>1 else [])
         check(item,f'食品!L{r}',price(r),*opts)
 soup=add(noodles,'鱼丸汤粉',price(44),['食品!44','食品!45','食品!46'],[
-    group('面类',[('河粉',0),('米粉',0),('面',0)]),group('+',[(n,price(r)-price(44)) for n,r in [('鸡丝',44),('鸡丝虾',45),('叉烧',46)]])])
+    group('面类',[('河粉',0),('米粉',0),('面',0)]),group('配料',[(n,price(r)-price(44)) for n,r in [('鸡丝',44),('鸡丝虾',45),('叉烧',46)]])])
 for meat,row in [('鸡丝',44),('鸡丝虾',45),('叉烧',46)]:check(soup,f'食品!L{row}',price(row),'河粉',meat)
 white=add(noodles,'清汤白斩鸡腿面',price(75),['食品!75','食品!76'],[group('面类',[('河粉',0),('生面',price(76)-price(75))])])
 check(white,'食品!L75',price(75),'河粉');check(white,'食品!L76',price(76),'生面')
 
 rice=category('饭类')
-for name,row in [('咖喱鸡饭',59),('卤花肉蛋饭配菜',61),('咖喱鸡椰浆饭',62),('鸡扒炒饭配荷包蛋',63),('黑胡椒汁鸡扒饭',64),('白斩鸡腿饭配菜',77),('炸鸡腿椰浆饭配煎蛋',78)]:
+for name,row in [('咖喱鸡饭',59),('卤花肉蛋饭+菜',61),('咖喱鸡椰浆饭',62),('鸡扒炒饭+荷包蛋',63),('黑胡椒汁鸡扒饭',64),('白斩鸡腿+饭+菜',77),('炸鸡腿椰浆饭+煎蛋',78)]:
     item=add(rice,name,price(row),[f'食品!{row}']);check(item,f'食品!L{row}',price(row))
 fried=add(rice,'炒饭',price(65),[f'食品!{r}' for r in range(65,71)],[
-    group('+',[('鸡肉',0),('叉烧',price(67)-price(65)),('蔬菜',price(67)-price(65)),('烧肉',price(69)-price(65)),('虾',price(69)-price(65))]),
+    group('配料',[('鸡肉',0),('叉烧',price(67)-price(65)),('蔬菜',price(67)-price(65)),('烧肉',price(69)-price(65)),('虾',price(69)-price(65))]),
     group('荷包蛋',[('不加蛋',0),('加荷包蛋',price(66)-price(65))])])
 for meat,row in [('鸡肉',65),('叉烧',67),('蔬菜',67),('烧肉',69),('虾',69)]:
     check(fried,f'食品!L{row}',price(row),meat,'不加蛋');check(fried,f'食品!L{row+1}',price(row+1),meat,'加荷包蛋')
 stir=category('炒粉面')
 friedmee=add(stir,'炒面',price(71),['食品!69','食品!70','食品!71','食品!72'],[
     group('面类',[('面',0),('河粉',0),('米粉',0)]),
-    group('+',[('鸡肉',0),('叉烧',price(72)-price(71)),('烧肉',price(69)-price(71)),('虾',price(69)-price(71))]),
+    group('配料',[('鸡肉',0),('叉烧',price(72)-price(71)),('烧肉',price(69)-price(71)),('虾',price(69)-price(71))]),
     group('荷包蛋',[('不加蛋',0),('加荷包蛋',price(70)-price(69))])])
 for meat,row in [('鸡肉',71),('叉烧',72),('烧肉',69),('虾',69)]:check(friedmee,f'食品!L{row}',price(row),'面',meat,'不加蛋')
 for meat in ['烧肉','虾']:check(friedmee,'食品!L70',price(70),'面',meat,'加荷包蛋')

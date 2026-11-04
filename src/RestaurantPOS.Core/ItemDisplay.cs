@@ -18,7 +18,6 @@ public sealed record ItemDisplay(string Name, IReadOnlyList<string> Options)
     {
         var colon = text.IndexOfAny(['：', ':']);
         if (colon < 0) return text;
-        var group = text[..colon].Trim(); var value = text[(colon + 1)..].Trim();
-        return group is "配料" or "配" or "+" ? $"+ {value}" : value;
+        return text[(colon + 1)..].Trim();
     }
 }

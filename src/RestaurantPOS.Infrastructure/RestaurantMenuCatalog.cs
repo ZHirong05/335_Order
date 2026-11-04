@@ -6,7 +6,7 @@ using RestaurantPOS.Core;
 namespace RestaurantPOS.Infrastructure;
 
 public sealed record CatalogOption(string Name, decimal AdditionalPrice, bool IsDefault = false);
-public sealed record CatalogGroup(string Name, List<CatalogOption> Options);
+public sealed record CatalogGroup(string Name, List<CatalogOption> Options, int MaxSelections = 1);
 public sealed record CatalogItem(string Name, decimal Price, List<string> SourceRows, List<CatalogGroup> Groups);
 public sealed record CatalogCategory(string Name, bool IsBeverage, List<CatalogItem> Items);
 public sealed record CatalogPriceCheck(string Item, string Source, decimal Price, List<string> Options);
@@ -26,7 +26,7 @@ public static class RestaurantMenuCatalog
             items.Select(i => i.Name).Distinct().Count() != items.Count ||
             items.Any(i => string.IsNullOrWhiteSpace(i.Name) || !Money(i.Price) || i.SourceRows.Count == 0 ||
                 i.Groups.Select(g => g.Name).Distinct().Count() != i.Groups.Count ||
-                i.Groups.Any(g => g.Options.Count == 0 || g.Options.Count(o => o.IsDefault) > 1 || g.Options.Select(o => o.Name).Distinct().Count() != g.Options.Count || g.Options.Any(o => !Money(o.AdditionalPrice)))))
+                i.Groups.Any(g => g.MaxSelections is < 1 or > 2 || g.Options.Count == 0 || g.Options.Count(o => o.IsDefault) > 1 || g.Options.Select(o => o.Name).Distinct().Count() != g.Options.Count || g.Options.Any(o => !Money(o.AdditionalPrice)))))
             throw new InvalidOperationException("Restaurant menu validation failed");
         foreach (var check in catalog.PriceChecks)
         {
@@ -64,7 +64,7 @@ public static class RestaurantMenuCatalog
                 for (var g = 0; g < entry.Groups.Count; g++)
                 {
                     var options = entry.Groups[g];
-                    item.OptionGroups.Add(new MenuOptionGroup { Name = options.Name, SortOrder = g, Options = options.Options.Select((o, sort) => new MenuOption { Name = o.Name, AdditionalPrice = o.AdditionalPrice, IsDefault = o.IsDefault, SortOrder = sort }).ToList() });
+                    item.OptionGroups.Add(new MenuOptionGroup { Name = options.Name, MaxSelections = options.MaxSelections, SortOrder = g, Options = options.Options.Select((o, sort) => new MenuOption { Name = o.Name, AdditionalPrice = o.AdditionalPrice, IsDefault = o.IsDefault, SortOrder = sort }).ToList() });
                 }
                 db.Menu.Add(item);
             }

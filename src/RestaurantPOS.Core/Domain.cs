@@ -58,6 +58,7 @@ public sealed class MenuItem
 }
 public sealed class MenuOptionGroup
 {
+    public int MaxSelections { get; set; } = 1;
     public int Id { get; set; }
     public int MenuItemId { get; set; }
     public string Name { get; set; } = "";

@@ -186,6 +186,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible { 
 .menu-search { margin:0 0 16px; font-size:calc(12px * var(--small-text-scale)); color:var(--brand-muted); }
 .menu-search input { width:100%; margin-top:6px; }
 .category-tabs { display:flex; flex-wrap:wrap; gap:8px; }
+.option-group-hint { color:var(--brand-muted); font-size:14px; margin:0 0 10px; }
 .menu-section-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
 .menu-section-button { min-height:68px; padding:14px; background:var(--brand-surface); color:var(--brand-ink); font-size:20px; font-weight:650; }
 .menu-section-button:hover { background:var(--brand-soft); color:var(--brand-burgundy); }

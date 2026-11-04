@@ -1,5 +1,5 @@
 {
-  "Version": "book1-2026-11-v2",
+  "Version": "book1-2026-11-v3",
   "SourceSha256": "d9fd7d0b5a96979015e4d3f72d3d2e82d12363c4d812c49c8f91448ad14f7223",
   "Categories": [
     {
@@ -26,6 +26,7 @@
           "Groups": [
             {
               "Name": "面类",
+              "MaxSelections": 2,
               "Options": [
                 {
                   "Name": "面",
@@ -46,7 +47,8 @@
               ]
             },
             {
-              "Name": "+",
+              "Name": "配料",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "鸡肉",
@@ -94,6 +96,7 @@
           "Groups": [
             {
               "Name": "面类",
+              "MaxSelections": 2,
               "Options": [
                 {
                   "Name": "面",
@@ -114,7 +117,8 @@
               ]
             },
             {
-              "Name": "+",
+              "Name": "配料",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "虾",
@@ -159,6 +163,7 @@
           "Groups": [
             {
               "Name": "面类",
+              "MaxSelections": 2,
               "Options": [
                 {
                   "Name": "面",
@@ -180,6 +185,7 @@
             },
             {
               "Name": "做法",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "干",
@@ -203,6 +209,7 @@
           "Groups": [
             {
               "Name": "面类",
+              "MaxSelections": 2,
               "Options": [
                 {
                   "Name": "面",
@@ -224,6 +231,7 @@
             },
             {
               "Name": "做法",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "干",
@@ -247,6 +255,7 @@
           "Groups": [
             {
               "Name": "面类",
+              "MaxSelections": 2,
               "Options": [
                 {
                   "Name": "面",
@@ -268,6 +277,7 @@
             },
             {
               "Name": "做法",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "干",
@@ -291,6 +301,7 @@
           "Groups": [
             {
               "Name": "面类",
+              "MaxSelections": 2,
               "Options": [
                 {
                   "Name": "面",
@@ -323,6 +334,7 @@
           "Groups": [
             {
               "Name": "面类",
+              "MaxSelections": 2,
               "Options": [
                 {
                   "Name": "河粉",
@@ -339,7 +351,8 @@
               ]
             },
             {
-              "Name": "+",
+              "Name": "配料",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "鸡丝",
@@ -367,6 +380,7 @@
           "Groups": [
             {
               "Name": "面类",
+              "MaxSelections": 2,
               "Options": [
                 {
                   "Name": "河粉",
@@ -395,7 +409,7 @@
           "Groups": []
         },
         {
-          "Name": "卤花肉蛋饭配菜",
+          "Name": "卤花肉蛋饭+菜",
           "Price": 11.0,
           "SourceRows": [
             "食品!61"
@@ -411,7 +425,7 @@
           "Groups": []
         },
         {
-          "Name": "鸡扒炒饭配荷包蛋",
+          "Name": "鸡扒炒饭+荷包蛋",
           "Price": 17.0,
           "SourceRows": [
             "食品!63"
@@ -427,7 +441,7 @@
           "Groups": []
         },
         {
-          "Name": "白斩鸡腿饭配菜",
+          "Name": "白斩鸡腿+饭+菜",
           "Price": 13.0,
           "SourceRows": [
             "食品!77"
@@ -435,7 +449,7 @@
           "Groups": []
         },
         {
-          "Name": "炸鸡腿椰浆饭配煎蛋",
+          "Name": "炸鸡腿椰浆饭+煎蛋",
           "Price": 17.0,
           "SourceRows": [
             "食品!78"
@@ -455,7 +469,8 @@
           ],
           "Groups": [
             {
-              "Name": "+",
+              "Name": "配料",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "鸡肉",
@@ -481,6 +496,7 @@
             },
             {
               "Name": "荷包蛋",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "不加蛋",
@@ -512,6 +528,7 @@
           "Groups": [
             {
               "Name": "面类",
+              "MaxSelections": 2,
               "Options": [
                 {
                   "Name": "面",
@@ -528,7 +545,8 @@
               ]
             },
             {
-              "Name": "+",
+              "Name": "配料",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "鸡肉",
@@ -550,6 +568,7 @@
             },
             {
               "Name": "荷包蛋",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "不加蛋",
@@ -578,6 +597,7 @@
           "Groups": [
             {
               "Name": "份量",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "3份",
@@ -608,6 +628,7 @@
           "Groups": [
             {
               "Name": "做法",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "炸",
@@ -638,6 +659,7 @@
           "Groups": [
             {
               "Name": "做法",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "炸",
@@ -660,6 +682,7 @@
           "Groups": [
             {
               "Name": "菜类",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "小白菜",
@@ -702,6 +725,7 @@
           "Groups": [
             {
               "Name": "肉类",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "炸鸡排肉",
@@ -728,6 +752,7 @@
           "Groups": [
             {
               "Name": "份量",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "小份",
@@ -804,6 +829,7 @@
           "Groups": [
             {
               "Name": "份量",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "普通份",
@@ -833,6 +859,7 @@
           "Groups": [
             {
               "Name": "份量",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "半份",
@@ -856,6 +883,7 @@
           "Groups": [
             {
               "Name": "数量",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "1粒",
@@ -884,6 +912,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -914,6 +943,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -944,6 +974,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -974,6 +1005,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1004,6 +1036,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1034,6 +1067,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1064,6 +1098,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1094,6 +1129,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1126,6 +1162,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1156,6 +1193,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1186,6 +1224,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1216,6 +1255,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1246,6 +1286,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1276,6 +1317,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1302,6 +1344,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1332,6 +1375,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1350,6 +1394,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1372,6 +1417,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1402,6 +1448,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1438,6 +1485,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1468,6 +1516,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1498,6 +1547,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1528,6 +1578,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1558,6 +1609,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1584,6 +1636,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Hot",
@@ -1620,6 +1673,7 @@
           "Groups": [
             {
               "Name": "Flavour",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "100 Plus",
@@ -1633,6 +1687,7 @@
             },
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Can",
@@ -1655,6 +1710,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1685,6 +1741,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1715,6 +1772,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Glass",
@@ -1737,6 +1795,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Can",
@@ -1759,6 +1818,7 @@
           "Groups": [
             {
               "Name": "Size",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Small",
@@ -1787,6 +1847,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Cold",
@@ -1813,6 +1874,7 @@
           "Groups": [
             {
               "Name": "Fruit",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Orange",
@@ -1830,6 +1892,7 @@
             },
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Cold",
@@ -1856,6 +1919,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Cold",
@@ -1888,6 +1952,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Can",
@@ -1906,6 +1971,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Can",
@@ -1924,6 +1990,7 @@
           "Groups": [
             {
               "Name": "Serving",
+              "MaxSelections": 1,
               "Options": [
                 {
                   "Name": "Can",
@@ -2261,7 +2328,7 @@
       "Options": []
     },
     {
-      "Item": "卤花肉蛋饭配菜",
+      "Item": "卤花肉蛋饭+菜",
       "Source": "食品!L61",
       "Price": 11.0,
       "Options": []
@@ -2273,7 +2340,7 @@
       "Options": []
     },
     {
-      "Item": "鸡扒炒饭配荷包蛋",
+      "Item": "鸡扒炒饭+荷包蛋",
       "Source": "食品!L63",
       "Price": 17.0,
       "Options": []
@@ -2285,13 +2352,13 @@
       "Options": []
     },
     {
-      "Item": "白斩鸡腿饭配菜",
+      "Item": "白斩鸡腿+饭+菜",
       "Source": "食品!L77",
       "Price": 13.0,
       "Options": []
     },
     {
-      "Item": "炸鸡腿椰浆饭配煎蛋",
+      "Item": "炸鸡腿椰浆饭+煎蛋",
       "Source": "食品!L78",
       "Price": 17.0,
       "Options": []

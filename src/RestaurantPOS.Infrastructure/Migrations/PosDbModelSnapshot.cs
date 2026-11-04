@@ -431,6 +431,9 @@ namespace RestaurantPOS.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("MaxSelections")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("MenuItemId")
                         .HasColumnType("INTEGER");
 
@@ -446,7 +449,10 @@ namespace RestaurantPOS.Infrastructure.Migrations
                     b.HasIndex("MenuItemId", "Name")
                         .IsUnique();
 
-                    b.ToTable("MenuOptionGroups");
+                    b.ToTable("MenuOptionGroups", t =>
+                        {
+                            t.HasCheckConstraint("CK_OptionGroupSelections", "MaxSelections BETWEEN 1 AND 2");
+                        });
                 });
 
             modelBuilder.Entity("RestaurantPOS.Core.Order", b =>

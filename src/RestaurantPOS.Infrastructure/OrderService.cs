@@ -204,9 +204,9 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
             if (ids.Count > 20 || ids.Distinct().Count() != ids.Count || (menu.OptionGroups.Count > 0 && input.VariationId.HasValue))
                 throw new BusinessException("Choose one option from each selection group", 400);
             var chosen = menu.OptionGroups.OrderBy(g => g.SortOrder).SelectMany(g => g.Options.Where(x => ids.Contains(x.Id))).ToList();
-            if (chosen.Count != ids.Count || chosen.Any(x => !x.IsAvailable) || menu.OptionGroups.Any(g => chosen.Count(x => x.MenuOptionGroupId == g.Id) != 1))
-                throw new BusinessException("Choose one available option from each selection group", 400);
-            var optionNames = menu.OptionGroups.OrderBy(g => g.SortOrder).Select(g => $"{g.Name}：{chosen.Single(x => x.MenuOptionGroupId == g.Id).Name}").ToList();
+            if (chosen.Count != ids.Count || chosen.Any(x => !x.IsAvailable) || menu.OptionGroups.Any(g => chosen.Count(x => x.MenuOptionGroupId == g.Id) < 1 || chosen.Count(x => x.MenuOptionGroupId == g.Id) > g.MaxSelections))
+                throw new BusinessException("Choose available options within each group's selection limit", 400);
+            var optionNames = menu.OptionGroups.OrderBy(g => g.SortOrder).Select(g => $"{g.Name}：{string.Join("/", chosen.Where(x => x.MenuOptionGroupId == g.Id).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).Select(x => x.Name))}").ToList();
             var name = optionNames.Count > 0 ? $"{menu.Name}（{string.Join("，", optionNames)}）" : variation == null ? menu.Name : $"{menu.Name} ({variation.Name})";
             var unitPrice = menu.Price + (variation?.AdditionalPrice ?? 0m) + chosen.Sum(x => x.AdditionalPrice);
             var item = new OrderItem { OrderId = o.Id, MenuItemId = menu.Id, ItemNameSnapshot = name, UnitPriceSnapshot = unitPrice, Quantity = input.Quantity, Notes = input.Notes ?? "" };

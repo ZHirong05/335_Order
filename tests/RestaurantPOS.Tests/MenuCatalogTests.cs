@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using RestaurantPOS.Core;
 using RestaurantPOS.Infrastructure;
 
@@ -66,7 +68,7 @@ public sealed class MenuCatalogTests : IAsyncLifetime
     {
         await Import(); var curry = (await service.Menu()).Single(m => m.Name == "咖喱面");
         var noodles = curry.OptionGroups.Single(g => g.Name == "面类").Options.Single(o => o.Name == "生面");
-        var meat = curry.OptionGroups.Single(g => g.Name == "+").Options.Single(o => o.Name == "叉烧");
+        var meat = curry.OptionGroups.Single(g => g.Name == "配料").Options.Single(o => o.Name == "叉烧");
         var input = new CreateOrderInput(OrderType.Takeaway, null, "", [new(curry.Id, 2, OptionIds: [noodles.Id, meat.Id])], "curry-snapshot");
         var id = await service.Create(input, "admin"); Assert.Equal(id, await service.Create(input, "admin"));
         await using (var db = factory.CreateDbContext()) { var option = await db.MenuOptions.SingleAsync(o => o.Id == meat.Id); option.Name = "changed"; option.AdditionalPrice = 99m; await db.SaveChangesAsync(); }
@@ -81,7 +83,7 @@ public sealed class MenuCatalogTests : IAsyncLifetime
     {
         await Import(); var menu = await service.Menu();
         var prawn = menu.Single(m => m.Name == "虾汤面");
-        var extra = prawn.OptionGroups.Single(g => g.Name == "+");
+        var extra = prawn.OptionGroups.Single(g => g.Name == "配料");
         Assert.Equal("虾", Assert.Single(extra.Options, o => o.IsDefault).Name);
         Assert.DoesNotContain(extra.Options, o => o.Name == "原味");
         var chicken = menu.Single(m => m.Name == "鸡排／白斩鸡／炸鸡腿");
@@ -91,6 +93,54 @@ public sealed class MenuCatalogTests : IAsyncLifetime
         Assert.Equal(6m, curry.Price);
         Assert.Equal(new[] { "小份", "大份" }, curry.OptionGroups.Single().Options.OrderBy(o => o.SortOrder).Select(o => o.Name));
         Assert.Equal(6m, curry.OptionGroups.Single().Options.Single(o => o.Name == "大份").AdditionalPrice);
+    }
+    [Theory]
+    [InlineData("面", "米粉", "10.50")]
+    [InlineData("米粉", "生面", "11.00")]
+    public async Task TwoNoodlesAreOneOrderLineWithStableCombinedNameAndExactSurcharges(string first, string second, string price)
+    {
+        await Import(); var item = (await service.Menu()).Single(m => m.Name == "咖喱面");
+        var noodles = item.OptionGroups.Single(g => g.Name == "面类");
+        var meat = item.OptionGroups.Single(g => g.Name == "配料").Options.Single(o => o.Name == "叉烧");
+        Assert.Equal(2, noodles.MaxSelections);
+        var ids = new List<int> { noodles.Options.Single(o => o.Name == second).Id, meat.Id, noodles.Options.Single(o => o.Name == first).Id };
+        var request = new CreateOrderInput(OrderType.Takeaway, null, "", [new(item.Id, 2, OptionIds: ids)], "mixed-noodles");
+        var id = await service.Create(request, "admin"); Assert.Equal(id, await service.Create(request, "admin"));
+        var bill = await service.Bill(id); var line = Assert.Single(bill.Items);
+        Assert.Equal(decimal.Parse(price, System.Globalization.CultureInfo.InvariantCulture), line.UnitPrice);
+        Assert.Equal(2, line.Quantity); Assert.Equal(line.UnitPrice * 2, bill.Total);
+        Assert.Equal(new[] { $"{first}/{second}", "叉烧" }, ItemDisplay.Parse(line.Name).Options);
+        Assert.Equal(2, Assert.Single(await service.Tickets()).Items.Single().Quantity);
+    }
+    [Fact] public async Task ThreeNoodlesAndMultipleMeatsAreRejectedAndDishNamesUsePlus()
+    {
+        await Import(); var menu = await service.Menu(); var item = menu.Single(m => m.Name == "咖喱面");
+        var noodles = item.OptionGroups.Single(g => g.Name == "面类"); var meat = item.OptionGroups.Single(g => g.Name == "配料");
+        var three = noodles.Options.Take(3).Select(o => o.Id).Append(meat.Options[0].Id).ToList();
+        var twoMeats = meat.Options.Take(2).Select(o => o.Id).Append(noodles.Options[0].Id).ToList();
+        foreach (var ids in new[] { three, twoMeats })
+            await Assert.ThrowsAsync<BusinessException>(() => service.Create(new(OrderType.Takeaway, null, "", [new(item.Id, 1, OptionIds: ids)], Guid.NewGuid().ToString()), "admin"));
+        Assert.Empty(await service.Active());
+        Assert.Contains(menu, m => m.Name == "白斩鸡腿+饭+菜");
+        Assert.Contains(menu, m => m.Name == "鸡扒炒饭+荷包蛋");
+        Assert.DoesNotContain(menu, m => m.Name.Contains("配菜") || m.Name.Contains("配饭") || m.Name.Contains("配荷包蛋"));
+        Assert.All(menu.SelectMany(m => m.OptionGroups), g => Assert.Equal(g.Name == "面类" ? 2 : 1, g.MaxSelections));
+        Assert.DoesNotContain(menu.SelectMany(m => m.OptionGroups), g => g.Name == "+");
+    }
+    [Fact] public async Task SelectionLimitMigrationPreservesExistingGroupsAndOptions()
+    {
+        await using var db = factory.CreateDbContext();
+        var group = new MenuOptionGroup { MenuItemId = 1, Name = "面类", Options = [new MenuOption { Name = "面" }, new MenuOption { Name = "米粉" }] };
+        db.MenuOptionGroups.Add(group); await db.SaveChangesAsync();
+        var id = group.Id; var optionIds = group.Options.Select(o => o.Id).Order().ToList();
+        db.ChangeTracker.Clear();
+        var migrator = db.GetService<IMigrator>();
+        await migrator.MigrateAsync("20261103073003_MenuOptionDefaults");
+        await migrator.MigrateAsync();
+        var saved = await db.MenuOptionGroups.AsNoTracking().Include(g => g.Options).SingleAsync(g => g.Id == id);
+        Assert.Equal(1, saved.MaxSelections); Assert.Equal(optionIds, saved.Options.Select(o => o.Id).Order());
+        await RestaurantMenuCatalog.Apply(db);
+        Assert.All((await service.Menu()).SelectMany(m => m.OptionGroups).Where(g => g.Name == "面类"), g => Assert.Equal(2, g.MaxSelections));
     }
     private sealed class Events : IBusinessEvents { public Task Publish(BusinessEvent e) => Task.CompletedTask; }
     private sealed class Factory(DbContextOptions<PosDb> options) : IDbContextFactory<PosDb> { public PosDb CreateDbContext() => new(options); }

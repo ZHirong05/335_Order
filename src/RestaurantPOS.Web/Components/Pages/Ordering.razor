@@ -172,10 +172,12 @@
                 }
                 @foreach (var group in selected.OptionGroups.OrderBy(g => g.SortOrder))
                 {
-                    <fieldset class="variation-fieldset menu-option-group" @key="group.Id"><legend>@group.Name</legend><div class="variation-grid">
+                    <fieldset class="variation-fieldset menu-option-group" @key="group.Id"><legend>@group.Name</legend>
+                    @if (group.MaxSelections > 1) { <p class="option-group-hint">@Text.Pick("Choose 1 or 2", "可选1至2种")</p> }
+                    <div class="variation-grid">
                         @foreach (var option in group.Options.OrderBy(o => o.SortOrder))
                         {
-                            <button type="button" class="variation-option @(selectedOptions.GetValueOrDefault(group.Id) == option.Id ? "is-selected" : "")" aria-pressed="@(selectedOptions.GetValueOrDefault(group.Id) == option.Id ? "true" : "false")" @onclick="() => selectedOptions[group.Id] = option.Id">
+                            <button type="button" class="variation-option @(selectedOptions.Contains(option.Id) ? "is-selected" : "")" aria-pressed="@(selectedOptions.Contains(option.Id) ? "true" : "false")" disabled="@(group.MaxSelections > 1 && !selectedOptions.Contains(option.Id) && SelectedCount(group) >= group.MaxSelections)" @onclick="() => ToggleOption(group, option)">
                                 @option.Name@if (option.AdditionalPrice > 0) { <strong>+ RM @option.AdditionalPrice.ToString("0.00")</strong> }
                             </button>
                         }
@@ -212,7 +214,7 @@
     private long version;
     private MenuItem? selected;
     private int? selectedVariationId;
-    private readonly Dictionary<int, int> selectedOptions = [];
+    private readonly HashSet<int> selectedOptions = [];
     private int selectedQuantity = 1;
     private string selectedNotes = "";
     private string? pickerError;
@@ -248,9 +250,19 @@
         beverageSection = beverages; categoryId = 0; search = "";
     }
     private decimal PickerPrice => (selected?.Price ?? 0m) + (selected?.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.AdditionalPrice ?? 0m)
-        + (selected?.OptionGroups.SelectMany(g => g.Options).Where(o => selectedOptions.Values.Contains(o.Id)).Sum(o => o.AdditionalPrice) ?? 0m);
+        + (selected?.OptionGroups.SelectMany(g => g.Options).Where(o => selectedOptions.Contains(o.Id)).Sum(o => o.AdditionalPrice) ?? 0m);
     private bool PickerReady => selected != null && (selected.Variations.Count == 0 || selectedVariationId.HasValue)
-        && selected.OptionGroups.All(g => g.Options.Any(o => o.Id == selectedOptions.GetValueOrDefault(g.Id)));
+        && selected.OptionGroups.All(g => SelectedCount(g) >= 1 && SelectedCount(g) <= g.MaxSelections);
+    private int SelectedCount(MenuOptionGroup group) => group.Options.Count(o => selectedOptions.Contains(o.Id));
+    private void ToggleOption(MenuOptionGroup group, MenuOption option)
+    {
+        if (group.MaxSelections == 1)
+        {
+            foreach (var choice in group.Options) selectedOptions.Remove(choice.Id);
+            selectedOptions.Add(option.Id);
+        }
+        else if (!selectedOptions.Remove(option.Id) && SelectedCount(group) < group.MaxSelections) selectedOptions.Add(option.Id);
+    }
     protected override async Task OnParametersSetAsync()
     {
         if (initialized && loadedId == Id) return;
@@ -343,7 +355,7 @@
         foreach (var group in item.OptionGroups)
         {
             var option = group.Options.FirstOrDefault(o => o.IsDefault) ?? (group.Options.Count == 1 ? group.Options.Single() : null);
-            if (option != null) selectedOptions[group.Id] = option.Id;
+            if (option != null) selectedOptions.Add(option.Id);
         }
     }
     private void ClosePicker() => selected = null;
@@ -354,9 +366,9 @@
         if (selectedQuantity is < 1 or > 99 || selectedNotes.Length > 500) { pickerError = "Choose a quantity from 1 to 99 and notes up to 500 characters."; return; }
         if (!PickerReady) { pickerError = Text["Choose an option in each group."]; return; }
         if (cart.Count >= 100) { pickerError = "Send this batch before adding more items (maximum 100 lines)."; return; }
-        var options = selected.OptionGroups.OrderBy(g => g.SortOrder).Select(g => $"{g.Name}：{g.Options.Single(o => o.Id == selectedOptions[g.Id]).Name}").ToList();
+        var options = selected.OptionGroups.OrderBy(g => g.SortOrder).Select(g => $"{g.Name}：{string.Join("/", g.Options.Where(o => selectedOptions.Contains(o.Id)).OrderBy(o => o.SortOrder).ThenBy(o => o.Id).Select(o => o.Name))}").ToList();
         cart.Add(new() { MenuItemId = selected.Id, MenuName = selected.Name, VariationId = selectedVariationId,
-            OptionIds = selectedOptions.Values.Order().ToList(),
+            OptionIds = selectedOptions.Order().ToList(),
             VariationName = options.Count > 0 ? string.Join("，", options) : selected.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.Name ?? (selected.Category.IsBeverage ? "Standard" : "标准"),
             UnitPrice = PickerPrice, Quantity = selectedQuantity, Notes = selectedNotes.Trim() });
         selected = null;
