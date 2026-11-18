@@ -39,7 +39,7 @@ public sealed class UiText(IHttpContextAccessor accessor)
         ["View every order clearly,"] = "清楚查看每份订单，", ["right down to the last item."] = "掌握每项账单明细。", ["01 / WAITER"] = "01 / 点餐", ["02 / KITCHEN"] = "02 / 厨房", ["03 / CASHIER"] = "03 / 收银",
         ["MADE TO SERVE"] = "用心服务", ["THE NEXT ORDER"] = "下一份订单", ["Freshly prepared."] = "新鲜现做。", ["No remaining items."] = "没有剩余品项。",
         ["Any instructions for the whole order?"] = "整份订单有任何特别要求吗？", ["For example: no chili, less sugar…"] = "例如：不要辣、少糖…", ["Search the menu…"] = "搜索菜单…", ["Add a note for the kitchen if needed"] = "如有需要，请给厨房留言",
-        ["Select table"] = "选择桌位", ["Type"] = "方式", ["Food step"] = "餐点", ["Start order"] = "开始点餐", ["seats"] = "座位", ["No remaining items"] = "没有剩余品项",
+        ["Outside"] = "室外", ["Inside"] = "室内", ["Select table"] = "选择桌位", ["Type"] = "方式", ["Food step"] = "餐点", ["Start order"] = "开始点餐", ["seats"] = "座位", ["No remaining items"] = "没有剩余品项",
         ["Reference:"] = "付款备注：", ["Cash received RM"] = "实收现金 RM", ["Change RM"] = "找零 RM", ["CLOSED · Balance settled"] = "已结单 · 余额已付清",
         ["Bill data is unavailable. Use Refresh bills to try again."] = "账单资料暂不可用，请刷新重试。", ["Loading orders…"] = "正在载入订单…", ["Order sent to the kitchen successfully."] = "订单已发送到厨房。",
         ["PAID / CHECKED OUT · Continue preparing this ticket"] = "已付款／结单 · 请继续准备餐点",

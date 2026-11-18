@@ -451,7 +451,7 @@ namespace RestaurantPOS.Infrastructure.Migrations
 
                     b.ToTable("MenuOptionGroups", t =>
                         {
-                            t.HasCheckConstraint("CK_OptionGroupSelections", "MaxSelections BETWEEN 1 AND 2");
+                            t.HasCheckConstraint("CK_OptionGroupSelections", "MaxSelections BETWEEN 1 AND 20");
                         });
                 });
 
@@ -559,6 +559,10 @@ namespace RestaurantPOS.Infrastructure.Migrations
 
                     b.Property<int>("CancelledQuantity")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("ConfigurationJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("TEXT");

@@ -5,7 +5,7 @@ from decimal import Decimal
 
 parser = argparse.ArgumentParser(description="Build the reviewed Book1 restaurant catalog (standard library only).")
 parser.add_argument('--workbook', type=Path, default=Path(__file__).resolve().parents[1] / 'Book1.xlsx')
-parser.add_argument('--version', default='book1-2026-11-v3', help='Use a NEW version after editing an already imported workbook')
+parser.add_argument('--version', default='book1-2026-11-v5', help='Use a NEW version after editing an already imported workbook')
 args = parser.parse_args()
 workbook_bytes = args.workbook.read_bytes()
 ns = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
@@ -34,7 +34,7 @@ def category(name, beverage=False):
     categories.append(result)
     return result
 def group(name, options):
-    return dict(Name=name, MaxSelections=2 if name=='面类' else 1, Options=[dict(Name=n, AdditionalPrice=float(p)) for n,p in options])
+    return dict(Name=name, MaxSelections=len(options) if name=='配料' else 2 if name=='面类' else 1, Options=[dict(Name=n, AdditionalPrice=float(p)) for n,p in options])
 def add(cat, name, price, sources, groups=None):
     item = dict(Name=name, Price=float(price), SourceRows=sources, Groups=groups or [])
     cat['Items'].append(item)

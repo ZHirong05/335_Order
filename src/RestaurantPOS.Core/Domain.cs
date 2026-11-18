@@ -110,6 +110,7 @@ public sealed class Order
 }
 public sealed class OrderItem
 {
+    public string ConfigurationJson { get; set; } = "";
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid OrderId { get; set; }
     public int MenuItemId { get; set; }
@@ -159,7 +160,9 @@ public sealed class RequestRecord
     public string RequestHash { get; set; } = "";
     public Guid OrderId { get; set; }
 }
-public record ItemInput(int MenuItemId, int Quantity, string Notes = "", int? VariationId = null, List<int>? OptionIds = null);
+public record OtherItemInput(string Name, decimal Price);
+public record ItemInput(int MenuItemId, int Quantity, string Notes = "", int? VariationId = null, List<int>? OptionIds = null, List<OtherItemInput>? OtherItems = null);
+public record EditItemInput(long Version, ItemInput Item, string IdempotencyKey);
 public record CreateOrderInput(OrderType OrderType, int? TableId, string Notes, List<ItemInput> Items, string IdempotencyKey);
 public record AddItemsInput(long Version, List<ItemInput> Items, string IdempotencyKey);
 public record CancelInput(long Version, int Quantity, string Reason = "");

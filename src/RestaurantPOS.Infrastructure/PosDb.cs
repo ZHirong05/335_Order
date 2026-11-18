@@ -40,7 +40,7 @@ public sealed class PosDb(DbContextOptions<PosDb> options) : IdentityDbContext<A
         b.Entity<MenuItem>().HasMany(x => x.OptionGroups).WithOne().HasForeignKey(x => x.MenuItemId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<MenuOptionGroup>().HasMany(x => x.Options).WithOne().HasForeignKey(x => x.MenuOptionGroupId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<MenuOptionGroup>().HasIndex(x => new { x.MenuItemId, x.Name }).IsUnique();
-        b.Entity<MenuOptionGroup>().ToTable(t => t.HasCheckConstraint("CK_OptionGroupSelections", "MaxSelections BETWEEN 1 AND 2"));
+        b.Entity<MenuOptionGroup>().ToTable(t => t.HasCheckConstraint("CK_OptionGroupSelections", "MaxSelections BETWEEN 1 AND 20"));
         b.Entity<MenuOption>().HasIndex(x => new { x.MenuOptionGroupId, x.Name }).IsUnique();
         b.Entity<MenuOption>().HasIndex(x => x.MenuOptionGroupId).IsUnique().HasFilter("IsDefault = 1");
         b.Entity<MenuCatalogImport>().HasKey(x => x.Key);

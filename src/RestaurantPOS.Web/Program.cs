@@ -52,6 +52,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     await db.Database.MigrateAsync();
     await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
     await Seed.Run(scope.ServiceProvider, app.Environment, app.Configuration);
+    await RestaurantTables.Apply(db);
     if (app.Configuration.GetValue("Menu:UseRestaurantCatalog", true)) await RestaurantMenuCatalog.Apply(db);
 }
 if (!app.Environment.IsDevelopment()) { app.UseExceptionHandler("/Error"); app.UseHsts(); app.UseHttpsRedirection(); }

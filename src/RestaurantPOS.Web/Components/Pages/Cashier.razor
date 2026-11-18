@@ -37,7 +37,7 @@ else if (bill != null)
         <p>@bill.DisplayNumber · @bill.BusinessDate · @Text.Destination(bill.Destination)</p>
         <p>@LocalTime(DateTime.UtcNow) MYT</p>
         <div class="receipt-table"><table><thead><tr><th>@Text["Item"]</th><th>@Text["Qty"]</th><th>@Text["Unit RM"]</th><th>@Text["Total RM"]</th></tr></thead><tbody>
-        @foreach (var i in bill.Items) { <tr><td><ItemName Value="@i.Name" /><br />@i.Notes</td><td>@i.Quantity</td><td>@i.UnitPrice.ToString("0.00")</td><td>@((i.Quantity * i.UnitPrice).ToString("0.00"))</td></tr> }
+        @foreach (var i in bill.Items.Where(i => i.Quantity > 0)) { <tr><td><ItemName Value="@i.Name" /><br />@i.Notes</td><td>@i.Quantity</td><td>@i.UnitPrice.ToString("0.00")</td><td>@((i.Quantity * i.UnitPrice).ToString("0.00"))</td></tr> }
         </tbody></table></div>
         <p><strong>@Text["Total RM"] @bill.Total.ToString("0.00")</strong></p>
         <p>@Text["Paid"] RM @bill.Paid.ToString("0.00") · @Text["Balance"] RM @bill.Balance.ToString("0.00")</p>

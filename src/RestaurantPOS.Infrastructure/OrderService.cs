@@ -72,6 +72,34 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
         await ApplyCancellation(db, id, itemId, input.Quantity, input.Reason);
         return (o, "ItemCancelled", (object)new { itemId, input.Quantity, input.Reason });
     });
+    public async Task<ItemInput> ItemConfiguration(Guid id, Guid itemId)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+        var item = await db.OrderItems.AsNoTracking().SingleOrDefaultAsync(x => x.OrderId == id && x.Id == itemId)
+            ?? throw new BusinessException("Item not found", 404);
+        var remaining = item.Quantity - item.CancelledQuantity;
+        if (remaining < 1) throw new BusinessException("Cancelled items cannot be edited");
+        if (!string.IsNullOrEmpty(item.ConfigurationJson))
+            return (JsonSerializer.Deserialize<ItemInput>(item.ConfigurationJson) ?? throw new BusinessException("Item configuration unavailable")) with { Quantity = remaining };
+        var menu = await db.Menu.Include(m => m.OptionGroups).ThenInclude(g => g.Options).Include(m => m.Variations).SingleAsync(m => m.Id == item.MenuItemId);
+        var options = ItemDisplay.Parse(item.ItemNameSnapshot).Options;
+        var ids = menu.OptionGroups.SelectMany(g => g.Options.Where(o => options.Any(s => s.Split('/').Contains(o.Name)))).Select(o => o.Id).ToList();
+        var variation = menu.Variations.FirstOrDefault(v => options.Contains(v.Name));
+        return new(item.MenuItemId, remaining, item.Notes, variation?.Id, ids);
+    }
+    public Task<Guid> EditItem(Guid id, Guid itemId, EditItemInput input, string actor)
+    {
+        RequireKey(input.IdempotencyKey);
+        return Write(actor, input.IdempotencyKey, new { Operation = "EditItem", id, itemId, input }, async db =>
+        {
+            var order = await Load(db, id, input.Version); await RequireEditable(db, order);
+            var original = await db.OrderItems.SingleOrDefaultAsync(x => x.OrderId == id && x.Id == itemId) ?? throw new BusinessException("Item not found", 404);
+            if (input.Item == null || input.Item.MenuItemId != original.MenuItemId) throw new BusinessException("Choose options for the same menu item", 400);
+            await ApplyCancellation(db, id, itemId, original.Quantity - original.CancelledQuantity, "Edited / 已修改");
+            await Append(db, order, [input.Item]);
+            return (order, "ItemEdited", (object)new { OriginalItemId = itemId, input.Item });
+        });
+    }
     public Task<Guid> CancelItems(Guid id, CancelItemsInput input, string actor)
     {
         RequireKey(input.IdempotencyKey);
@@ -218,10 +246,17 @@ public sealed class OrderService(IDbContextFactory<PosDb> factory, IBusinessEven
             if (chosen.Count != ids.Count || chosen.Any(x => !x.IsAvailable) || menu.OptionGroups.Any(g => chosen.Count(x => x.MenuOptionGroupId == g.Id) < 1 || chosen.Count(x => x.MenuOptionGroupId == g.Id) > g.MaxSelections))
                 throw new BusinessException("Choose available options within each group's selection limit", 400);
             var optionNames = menu.OptionGroups.OrderBy(g => g.SortOrder).Select(g => $"{g.Name}：{string.Join("/", chosen.Where(x => x.MenuOptionGroupId == g.Id).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).Select(x => x.Name))}").ToList();
+            var extras = input.OtherItems ?? [];
+            if (extras.Count > 20 || extras.Any(e => e == null || string.IsNullOrWhiteSpace(e.Name) || e.Name.Trim().Length > 100 || !ValidMoney(e.Price)))
+                throw new BusinessException("Enter an item name (up to 100 characters) and a non-negative price with at most two decimal places", 400);
+            if (extras.Count > 0 && variation != null && optionNames.Count == 0) optionNames.Add($"Variation：{variation.Name}");
+            optionNames.AddRange(extras.Select(e => $"其他：{e.Name.Trim()} +RM {e.Price:0.00}"));
             var name = optionNames.Count > 0 ? $"{menu.Name}（{string.Join("，", optionNames)}）" : variation == null ? menu.Name : $"{menu.Name} ({variation.Name})";
-            var unitPrice = menu.Price + (variation?.AdditionalPrice ?? 0m) + chosen.Sum(x => x.AdditionalPrice);
+            var unitPrice = menu.Price + (variation?.AdditionalPrice ?? 0m) + chosen.Sum(x => x.AdditionalPrice) + extras.Sum(e => e.Price);
+            if (!ValidMoney(unitPrice)) throw new BusinessException("Item total is too large", 400);
             var item = new OrderItem { OrderId = o.Id, MenuItemId = menu.Id, ItemNameSnapshot = name, UnitPriceSnapshot = unitPrice, Quantity = input.Quantity, Notes = input.Notes ?? "" };
             db.OrderItems.Add(item);
+            item.ConfigurationJson = JsonSerializer.Serialize(input);
             ticket.Items.Add(new KitchenTicketItem { OrderItemId = item.Id, Quantity = item.Quantity, NotesSnapshot = item.Notes });
         }
         db.Tickets.Add(ticket);

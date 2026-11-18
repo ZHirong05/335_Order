@@ -52,13 +52,16 @@
         <div class="section-heading"><h2>@Text["Restaurant tables"]</h2></div>
         <p class="muted">@Text["Choose an available table to start an order, or an occupied table to add more food."]</p>
         @if (tables.Count == 0) { <div class="empty-panel">@Text["No active tables are configured. You can still create a takeaway order."]</div> }
-        <div class="table-grid">
+        <div class="restaurant-floor">
+            <div class="floor-area-label floor-outside">@Text["Outside"]</div>
+            <div class="floor-divider" aria-hidden="true"></div>
+            <div class="floor-area-label floor-inside">@Text["Inside"]</div>
             @foreach (var t in tables)
             {
                 var occupied = active.FirstOrDefault(o => o.TableId == t.Id);
-                <button class="selection-card table-choice @(occupied != null ? "table-occupied" : "")" @onclick="() => ChooseTable(t)">
+                <button class="selection-card table-choice floor-table @(occupied != null ? "table-occupied" : "")" style="@TablePosition(t.Number)" @onclick="() => ChooseTable(t)">
                     <span class="status-badge @(occupied != null ? "status-occupied" : "status-available")">@(occupied == null ? Text["Available"] : Text["Occupied"])</span>
-                    <strong>@Text["Table"] @t.Number</strong><span>@t.Capacity @Text["seats"]</span><span class="choice-next">@(occupied == null ? Text["Start order"] + " →" : Text["Add to order"] + " →")</span>
+                    <strong>@Text["Table"] @t.Number</strong>
                 </button>
             }
         </div>
@@ -77,7 +80,7 @@
         <section class="current-order-panel"><div class="section-heading"><h2>@Text["Your order"]</h2><span>@existingBill.Items.Sum(i => i.Quantity) @Text["items"]</span></div>
             @foreach (var item in existingBill.Items)
             {
-                <div class="saved-order-line @(item.Quantity == 0 ? "cancelled-line" : "")"><strong>@item.Quantity &times; <ItemName Value="@item.Name" /></strong>@if (item.Quantity == 0) { <span>@Text["Cancelled"]</span> }@if (item.Notes.Length > 0) { <span>@item.Notes</span> }</div>
+                <div class="saved-order-line @(item.Quantity == 0 ? "cancelled-line" : "")"><strong>@item.Quantity &times; <ItemName Value="@item.Name" /></strong>@if (item.Quantity == 0) { <span>@Text["Cancelled"]</span> }@if (item.Notes.Length > 0) { <span>@item.Notes</span> }@if (item.Quantity > 0) { <button type="button" class="secondary-button" disabled="@(busy || existingBill.Status == OrderStatus.Closed || (existingBill.Payments?.Count ?? 0) > 0)" @onclick="() => EditSavedItem(item)">@Text.Pick("Edit", "修改")</button> }</div>
             }
         </section>
         @if (existingBill.Status != OrderStatus.Closed) { <div class="order-checkout-actions"><a class="action checkout-order-button" href="@($"/cashier/{targetOrderId}")">@((existingBill.Payments?.Count ?? 0) > 0 ? Text["Continue payment"] : Text["Checkout"]) &rarr;</a></div> }
@@ -173,7 +176,7 @@
                 @foreach (var group in selected.OptionGroups.OrderBy(g => g.SortOrder))
                 {
                     <fieldset class="variation-fieldset menu-option-group" @key="group.Id"><legend>@group.Name</legend>
-                    @if (group.MaxSelections > 1) { <p class="option-group-hint">@Text.Pick("Choose 1 or 2", "可选1至2种")</p> }
+                    @if (group.MaxSelections > 1) { <p class="option-group-hint">@Text.Pick($"Choose 1–{group.MaxSelections}", $"可选1至{group.MaxSelections}种")</p> }
                     <div class="variation-grid">
                         @foreach (var option in group.Options.OrderBy(o => o.SortOrder))
                         {
@@ -183,10 +186,22 @@
                         }
                     </div></fieldset>
                 }
+                <fieldset class="variation-fieldset other-items"><legend>@Text.Pick("Add other", "添加其他")</legend>
+                    <p class="muted">@Text.Pick("Prices are added to each unit of this item.", "价格计入每份餐点的单价。")</p>
+                    @foreach (var extra in otherItems)
+                    {
+                        <div class="other-item-row" @key="extra">
+                            <label>@Text.Pick("Item name", "名称")<input required maxlength="100" @bind="extra.Name" @bind:event="oninput" /></label>
+                            <label>@Text.Pick("Price (RM)", "价格 (RM)")<input required type="text" inputmode="numeric" class="money-input" autocomplete="off" value="@extra.Price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" @oninput="e => SetOtherPrice(extra, e)" /></label>
+                            <button type="button" class="secondary-button" @onclick="() => otherItems.Remove(extra)">@Text["Remove"]</button>
+                        </div>
+                    }
+                    <button type="button" class="secondary-button" disabled="@(otherItems.Count >= 20 || busy)" @onclick="() => otherItems.Add(new())">+ @Text.Pick("Add other", "添加其他")</button>
+                </fieldset>
                 <div class="quantity-field picker-quantity"><span>@Text["Quantity"]</span><QuantityInput Label="@Text["Quantity"]" @bind-Value="selectedQuantity" ButtonsOnRight="true" /></div>
                 <label>@Text["Kitchen notes"]<textarea maxlength="500" placeholder="For example: no chili, less sugar…" @bind="selectedNotes"></textarea></label>
                 @if (pickerError != null) { <p class="error" role="alert">@pickerError</p> }
-                <div class="picker-footer"><strong>RM @((PickerPrice * selectedQuantity).ToString("0.00"))</strong><button type="submit" disabled="@(!PickerReady)">@Text["Add to order"]</button></div>
+                <div class="picker-footer"><strong>RM @((PickerPrice * selectedQuantity).ToString("0.00"))</strong><button type="submit" disabled="@(busy || !PickerReady)">@(editingItemId.HasValue ? Text.Pick("Save changes", "保存修改") : Text["Add to order"])</button></div>
             </form>
         </section>
     </div>
@@ -197,6 +212,20 @@
     private OrderStep step;
     private List<MenuItem>? menu;
     private List<DiningTable> tables = [];
+    private static string TablePosition(int number)
+    {
+        var (row, column) = number switch
+        {
+            13 => (2, 1),
+            12 => (3, 1), 16 => (3, 3), 18 => (3, 4),
+            11 => (4, 1), 15 => (4, 3), 17 => (4, 4), 19 => (4, 5),
+            10 => (7, 1), 8 => (7, 2), 5 => (7, 4),
+            9 => (8, 1), 7 => (8, 2), 3 => (8, 4),
+            6 => (9, 2), 2 => (9, 3), 1 => (9, 4),
+            _ => (10, 1)
+        };
+        return $"grid-row:{row};grid-column:{column}";
+    }
     private List<Order> active = [];
     private readonly List<CartLine> cart = [];
     private OrderType type = OrderType.Takeaway;
@@ -218,6 +247,25 @@
     private int selectedQuantity = 1;
     private string selectedNotes = "";
     private string? pickerError;
+    private Guid? editingItemId;
+    private string editKey = Guid.NewGuid().ToString();
+    private readonly List<OtherDraft> otherItems = [];
+    private static void SetOtherPrice(OtherDraft extra, ChangeEventArgs e) { if (decimal.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var price)) extra.Price = price; }
+    private sealed class OtherDraft { public string Name { get; set; } = ""; public decimal Price { get; set; } }
+    private async Task EditSavedItem(BillLine line)
+    {
+        if (busy || !targetOrderId.HasValue) return;
+        try
+        {
+            var input = await Service.ItemConfiguration(targetOrderId.Value, line.Id);
+            var item = menu?.FirstOrDefault(m => m.Id == input.MenuItemId) ?? throw new BusinessException("Menu item unavailable");
+            OpenPicker(item); editingItemId = line.Id;
+            selectedQuantity = input.Quantity; selectedNotes = input.Notes; selectedVariationId = input.VariationId;
+            selectedOptions.Clear(); foreach (var option in input.OptionIds ?? []) selectedOptions.Add(option);
+            foreach (var extra in input.OtherItems ?? []) otherItems.Add(new() { Name = extra.Name, Price = extra.Price });
+        }
+        catch (BusinessException ex) { error = ex.Message; }
+    }
     private ElementReference picker;
     private bool focusPicker;
     private readonly CancellationTokenSource reconciliationStop = new();
@@ -250,7 +298,7 @@
         beverageSection = beverages; categoryId = 0; search = "";
     }
     private decimal PickerPrice => (selected?.Price ?? 0m) + (selected?.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.AdditionalPrice ?? 0m)
-        + (selected?.OptionGroups.SelectMany(g => g.Options).Where(o => selectedOptions.Contains(o.Id)).Sum(o => o.AdditionalPrice) ?? 0m);
+        + (selected?.OptionGroups.SelectMany(g => g.Options).Where(o => selectedOptions.Contains(o.Id)).Sum(o => o.AdditionalPrice) ?? 0m) + otherItems.Sum(e => e.Price);
     private bool PickerReady => selected != null && (selected.Variations.Count == 0 || selectedVariationId.HasValue)
         && selected.OptionGroups.All(g => SelectedCount(g) >= 1 && SelectedCount(g) <= g.MaxSelections);
     private int SelectedCount(MenuOptionGroup group) => group.Options.Count(o => selectedOptions.Contains(o.Id));
@@ -351,24 +399,44 @@
     }
     private void OpenPicker(MenuItem item)
     {
-        selected = item; selectedVariationId = null; selectedOptions.Clear(); selectedQuantity = 1; selectedNotes = ""; pickerError = null; focusPicker = true;
+        editingItemId = null; otherItems.Clear(); editKey = Guid.NewGuid().ToString(); selected = item; selectedVariationId = null; selectedOptions.Clear(); selectedQuantity = 1; selectedNotes = ""; pickerError = null; focusPicker = true;
         foreach (var group in item.OptionGroups)
         {
             var option = group.Options.FirstOrDefault(o => o.IsDefault) ?? (group.Options.Count == 1 ? group.Options.Single() : null);
             if (option != null) selectedOptions.Add(option.Id);
         }
     }
-    private void ClosePicker() => selected = null;
+    private void ClosePicker() { if (!busy) { selected = null; editingItemId = null; } }
     private void PickerKeyDown(KeyboardEventArgs e) { if (e.Key == "Escape") ClosePicker(); }
-    private void AddToOrder()
+    private async Task AddToOrder()
     {
-        if (selected == null) return;
+        if (selected == null || busy) return;
         if (selectedQuantity is < 1 or > 99 || selectedNotes.Length > 500) { pickerError = "Choose a quantity from 1 to 99 and notes up to 500 characters."; return; }
         if (!PickerReady) { pickerError = Text["Choose an option in each group."]; return; }
+        if (otherItems.Any(e => string.IsNullOrWhiteSpace(e.Name) || e.Name.Trim().Length > 100 || e.Price < 0 || e.Price > 999999999m || decimal.Round(e.Price, 2) != e.Price))
+        { pickerError = Text.Pick("Enter an item name and a valid price for every extra.", "请为每个附加项目填写名称和有效价格。"); return; }
+        if (editingItemId.HasValue && targetOrderId.HasValue)
+        {
+            busy = true;
+            try
+            {
+                var actor = (await Authentication.GetAuthenticationStateAsync()).User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+                var input = new ItemInput(selected.Id, selectedQuantity, selectedNotes.Trim(), selectedVariationId, selectedOptions.Order().ToList(), otherItems.Select(e => new OtherItemInput(e.Name.Trim(), e.Price)).ToList());
+                await Service.EditItem(targetOrderId.Value, editingItemId.Value, new(version, input, editKey), actor);
+                selected = null; editingItemId = null; await Reload();
+                success = Text.Pick("Item updated and kitchen notified.", "餐点已修改并通知厨房。");
+            }
+            catch (BusinessException ex) { pickerError = ex.Message; }
+            catch { pickerError = Text.Pick("Could not confirm the update. Retry or refresh the order.", "无法确认修改，请重试或刷新订单。"); }
+            finally { busy = false; }
+            return;
+        }
         if (cart.Count >= 100) { pickerError = "Send this batch before adding more items (maximum 100 lines)."; return; }
         var options = selected.OptionGroups.OrderBy(g => g.SortOrder).Select(g => $"{g.Name}：{string.Join("/", g.Options.Where(o => selectedOptions.Contains(o.Id)).OrderBy(o => o.SortOrder).ThenBy(o => o.Id).Select(o => o.Name))}").ToList();
+        if (options.Count == 0 && selectedVariationId.HasValue) options.Add($"Variation：{selected.Variations.First(v => v.Id == selectedVariationId).Name}");
+        options.AddRange(otherItems.Select(e => $"其他：{e.Name.Trim()} +RM {e.Price:0.00}"));
         cart.Add(new() { MenuItemId = selected.Id, MenuName = selected.Name, VariationId = selectedVariationId,
-            OptionIds = selectedOptions.Order().ToList(),
+            OptionIds = selectedOptions.Order().ToList(), OtherItems = otherItems.Select(e => new OtherItemInput(e.Name.Trim(), e.Price)).ToList(),
             VariationName = options.Count > 0 ? string.Join("，", options) : selected.Variations.FirstOrDefault(v => v.Id == selectedVariationId)?.Name ?? (selected.Category.IsBeverage ? "Standard" : "标准"),
             UnitPrice = PickerPrice, Quantity = selectedQuantity, Notes = selectedNotes.Trim() });
         selected = null;
@@ -382,7 +450,7 @@
             var user = (await Authentication.GetAuthenticationStateAsync()).User;
             if (!(user.IsInRole("Admin") || user.IsInRole("Waiter"))) throw new BusinessException("Not authorized", 403);
             if (cart.Any(x => x.Quantity is < 1 or > 99)) throw new BusinessException("Quantities must be from 1 to 99.", 400);
-            var items = cart.Select(x => new ItemInput(x.MenuItemId, x.Quantity, x.Notes, x.VariationId, x.OptionIds)).ToList();
+            var items = cart.Select(x => new ItemInput(x.MenuItemId, x.Quantity, x.Notes, x.VariationId, x.OptionIds, x.OtherItems)).ToList();
             Guid id;
             if (targetOrderId.HasValue) id = await Service.Add(targetOrderId.Value, new(version, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             else id = await Service.Create(new(type, type == OrderType.DineIn ? tableId : null, notes, items, key), user.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -401,7 +469,7 @@
         public int MenuItemId { get; init; }
         public string MenuName { get; init; } = "";
         public int? VariationId { get; init; }
-        public List<int> OptionIds { get; init; } = [];
+        public List<int> OptionIds { get; init; } = []; public List<OtherItemInput> OtherItems { get; init; } = [];
         public string VariationName { get; init; } = "";
         public decimal UnitPrice { get; init; }
         public int Quantity { get; set; }

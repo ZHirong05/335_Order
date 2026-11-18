@@ -351,3 +351,22 @@ textarea:focus-visible { outline:3px solid var(--brand-focus); outline-offset:3p
 .delete-bill-button:hover { background: #912018; border-color: #912018; }
 .settled-print-button { background: var(--brand-gold); border-color: var(--brand-gold); color: var(--brand-burgundy); }
 .settled-print-button:hover { background: #e6bc1e; border-color: #e6bc1e; }
+/* Table positions follow the restaurant's inside/outside floor sketch. */
+.restaurant-floor { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); grid-template-rows:28px repeat(3,minmax(90px,auto)) 24px 28px repeat(3,minmax(90px,auto)); gap:12px; max-width:850px; padding:20px; background:#f6f4ee; border:1px solid var(--border,#ddd); border-radius:20px; }
+.floor-area-label { grid-column:1 / -1; font-weight:700; color:var(--muted,#666); }
+.floor-outside { grid-row:1; }
+.floor-inside { grid-row:6; }
+.floor-divider { grid-row:5; grid-column:2 / -1; border-bottom:3px solid #b8b2a3; margin-bottom:12px; }
+.restaurant-floor .floor-table { min-width:0; min-height:90px; padding:12px 6px; align-items:center; justify-content:center; text-align:center; gap:8px; border-radius:18px; }
+.restaurant-floor .floor-table>strong { font-size:20px; }
+.restaurant-floor .status-badge { font-size:11px; padding:4px 6px; }
+@media(max-width:540px) { .restaurant-floor { padding:10px; gap:6px; grid-template-rows:24px repeat(3,84px) 20px 24px repeat(3,84px); } .restaurant-floor .floor-table { min-height:84px; padding:8px 2px; } .restaurant-floor .floor-table>strong { font-size:15px; } .restaurant-floor .status-badge { font-size:9px; padding:3px; } }
+
+.other-item-row { display:flex; gap:10px; align-items:end; margin-bottom:12px; }
+.other-item-row label { flex:1; min-width:0; }
+.other-item-row label:first-child { flex:2; }
+.saved-order-line { display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:16px; align-items:center; }
+.saved-order-line>strong, .saved-order-line>span { grid-column:1; }
+.saved-order-line>.secondary-button { grid-column:2; grid-row:1 / span 3; justify-self:end; align-self:center; }
+.money-input { text-align:left; direction:ltr; font-variant-numeric:tabular-nums; }
+@media(max-width:540px) { .other-item-row { flex-wrap:wrap; } .other-item-row label:first-child { flex-basis:100%; } }

@@ -1,5 +1,5 @@
 {
-  "Version": "book1-2026-11-v3",
+  "Version": "book1-2026-11-v5",
   "SourceSha256": "d9fd7d0b5a96979015e4d3f72d3d2e82d12363c4d812c49c8f91448ad14f7223",
   "Categories": [
     {
@@ -48,7 +48,7 @@
             },
             {
               "Name": "配料",
-              "MaxSelections": 1,
+              "MaxSelections": 6,
               "Options": [
                 {
                   "Name": "鸡肉",
@@ -118,7 +118,7 @@
             },
             {
               "Name": "配料",
-              "MaxSelections": 1,
+              "MaxSelections": 5,
               "Options": [
                 {
                   "Name": "虾",
@@ -352,7 +352,7 @@
             },
             {
               "Name": "配料",
-              "MaxSelections": 1,
+              "MaxSelections": 3,
               "Options": [
                 {
                   "Name": "鸡丝",
@@ -470,7 +470,7 @@
           "Groups": [
             {
               "Name": "配料",
-              "MaxSelections": 1,
+              "MaxSelections": 5,
               "Options": [
                 {
                   "Name": "鸡肉",
@@ -546,7 +546,7 @@
             },
             {
               "Name": "配料",
-              "MaxSelections": 1,
+              "MaxSelections": 4,
               "Options": [
                 {
                   "Name": "鸡肉",

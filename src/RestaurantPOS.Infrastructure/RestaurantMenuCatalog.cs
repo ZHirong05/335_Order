@@ -26,7 +26,7 @@ public static class RestaurantMenuCatalog
             items.Select(i => i.Name).Distinct().Count() != items.Count ||
             items.Any(i => string.IsNullOrWhiteSpace(i.Name) || !Money(i.Price) || i.SourceRows.Count == 0 ||
                 i.Groups.Select(g => g.Name).Distinct().Count() != i.Groups.Count ||
-                i.Groups.Any(g => g.MaxSelections is < 1 or > 2 || g.Options.Count == 0 || g.Options.Count(o => o.IsDefault) > 1 || g.Options.Select(o => o.Name).Distinct().Count() != g.Options.Count || g.Options.Any(o => !Money(o.AdditionalPrice)))))
+                i.Groups.Any(g => g.MaxSelections is < 1 or > 20 || g.Options.Count == 0 || g.Options.Count(o => o.IsDefault) > 1 || g.Options.Select(o => o.Name).Distinct().Count() != g.Options.Count || g.Options.Any(o => !Money(o.AdditionalPrice)))))
             throw new InvalidOperationException("Restaurant menu validation failed");
         foreach (var check in catalog.PriceChecks)
         {
